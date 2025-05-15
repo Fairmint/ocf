@@ -1,0 +1,69 @@
+{
+  "TransactionsFile": {
+    "items": [
+      "ConvertibleAcceptance", "EquityCompensationAcceptance", "StockAcceptance",
+      "WarrantAcceptance", "ConvertibleCancellation", "EquityCompensationCancellation",
+      "StockCancellation", "WarrantCancellation", "ConvertibleConversion",
+      "StockConversion", "EquityCompensationExercise", "WarrantExercise",
+      "ConvertibleIssuance", "EquityCompensationIssuance", "StockIssuance",
+      "WarrantIssuance", "StockReissuance", "StockConsolidation",
+      "StockRepurchase", "EquityCompensationRelease", "ConvertibleRetraction",
+      "EquityCompensationRetraction", "StockRetraction", "WarrantRetraction",
+      "StockPlanReturnToPool", "StockClassSplit", "StockClassConversionRatioAdjustment",
+      "StockClassAuthorizedSharesAdjustment", "ConvertibleTransfer",
+      "EquityCompensationTransfer", "StockTransfer", "WarrantTransfer",
+      "VestingAcceleration", "VestingStart", "VestingEvent", "StockPlanPoolAdjustment"
+    ],
+    "file_type": "OCF_TRANSACTIONS_FILE"
+  },
+  "DocumentsFile": {
+    "items": ["Document"],
+    "file_type": "OCF_DOCUMENTS_FILE"
+  },
+  "FinancingsFile": {
+    "items": ["Financing"],
+    "file_type": "OCF_FINANCINGS_FILE"
+  },
+  "StakeholdersFile": {
+    "items": ["Stakeholder"],
+    "file_type": "OCF_STAKEHOLDERS_FILE"
+  },
+  "StockClassesFile": {
+    "items": ["StockClass"],
+    "file_type": "OCF_STOCK_CLASSES_FILE"
+  },
+  "StockLegendTemplatesFile": {
+    "items": ["StockLegendTemplate"],
+    "file_type": "OCF_STOCK_LEGEND_TEMPLATES_FILE"
+  },
+  "StockPlansFile": {
+    "items": ["StockPlan"],
+    "file_type": "OCF_STOCK_PLANS_FILE"
+  },
+  "ValuationsFile": {
+    "items": ["Valuation"],
+    "file_type": "OCF_VALUATIONS_FILE"
+  },
+  "VestingTermsFile": {
+    "items": ["VestingTerms"],
+    "file_type": "OCF_VESTING_TERMS_FILE"
+  },
+  "OCFManifestFile": {
+    "ocf_version": "1.2.1-alpha+main",
+    "file_type": "OCF_MANIFEST_FILE",
+    "issuer": "Issuer",
+    "as_of": "Date",
+    "generated_at": "date-time",
+    "comments": "string[]",
+    "stock_plans_files": "File[]",
+    "stock_legend_templates_files": "File[]",
+    "stock_classes_files": "File[]",
+    "vesting_terms_files": "File[]",
+    "valuations_files": "File[]",
+    "transactions_files": "File[]",
+    "stakeholders_files": "File[]",
+    "financings_files": "File[]",
+    "documents_files": "File[]"
+  }
+}
+
