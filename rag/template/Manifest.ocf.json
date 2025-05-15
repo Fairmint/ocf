@@ -5,79 +5,40 @@
   "issuer": {
     "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Issuer.schema.json",
     "id": "issuer-template-id",
-    "name": "Template Issuer Inc.",
+    "legal_name": "Template Issuer Inc.",
     "formation_date": "2023-01-01",
     "country_of_formation": "US",
-    "legal_entity_type": "Corporation",
     "object_type": "ISSUER",
     "address": {
+      "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Address.schema.json",
+      "address_type": "LEGAL",
       "street_suite": "123 Main St",
       "city": "Anytown",
       "country_subdivision": "CA",
       "country": "US",
       "postal_code": "90210"
     },
-    "email": "contact@templateissuer.com",
-    "phone": "555-123-4567"
+    "email": {
+      "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Email.schema.json",
+      "email_type": "BUSINESS",
+      "email_address": "contact@templateissuer.com"
+    },
+    "phone": {
+      "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Phone.schema.json",
+      "phone_type": "BUSINESS",
+      "phone_number": "+1 555 123 4567"
+    }
   },
   "as_of": "2024-07-26",
   "generated_at": "2024-07-26T10:00:00Z",
-  "comments": [
-    "This is a template OCF manifest file. Please update all placeholder values, especially 'sha256_hash' for each file entry after populating them."
-  ],
-  "stakeholders_files": [
-    {
-      "path": "stakeholders.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "stock_classes_files": [
-    {
-      "path": "stock_classes.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "stock_legend_templates_files": [
-    {
-      "path": "stock_legend_templates.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "stock_plans_files": [
-    {
-      "path": "stock_plans.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "transactions_files": [
-    {
-      "path": "transactions.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "valuations_files": [
-    {
-      "path": "valuations.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "vesting_terms_files": [
-    {
-      "path": "vesting_terms.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "financings_files": [
-    {
-      "path": "financings.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
-  "documents_files": [
-    {
-      "path": "documents.ocf.json",
-      "sha256_hash": "TO_BE_COMPUTED"
-    }
-  ],
+  "stakeholders_files": [],
+  "stock_classes_files": [],
+  "stock_legend_templates_files": [],
+  "stock_plans_files": [],
+  "transactions_files": [],
+  "valuations_files": [],
+  "vesting_terms_files": [],
+  "financings_files": [],
+  "documents_files": [],
   "$comment": "Copyright © 2024 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/files/OCFManifestFile.schema.json"
 }

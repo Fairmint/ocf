@@ -2,8 +2,5 @@
   "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/files/ValuationsFile.schema.json",
   "file_type": "OCF_VALUATIONS_FILE",
   "items": [],
-  "comments": [
-    "Template OCF Valuations file. Add valuation objects to the 'items' array."
-  ],
   "$comment": "Copyright © 2024 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/files/ValuationsFile.schema.json"
 }
