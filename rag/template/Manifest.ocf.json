@@ -2,43 +2,66 @@
   "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/files/OCFManifestFile.schema.json",
   "ocf_version": "1.2.1-alpha+main",
   "file_type": "OCF_MANIFEST_FILE",
-  "issuer": {
-    "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Issuer.schema.json",
-    "id": "issuer-template-id",
-    "legal_name": "Template Issuer Inc.",
-    "formation_date": "2023-01-01",
-    "country_of_formation": "US",
-    "object_type": "ISSUER",
-    "address": {
-      "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Address.schema.json",
-      "address_type": "LEGAL",
-      "street_suite": "123 Main St",
-      "city": "Anytown",
-      "country_subdivision": "CA",
-      "country": "US",
-      "postal_code": "90210"
-    },
-    "email": {
-      "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Email.schema.json",
-      "email_type": "BUSINESS",
-      "email_address": "contact@templateissuer.com"
-    },
-    "phone": {
-      "$schema": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Phone.schema.json",
-      "phone_type": "BUSINESS",
-      "phone_number": "+1 555 123 4567"
+  "as_of": "2025-05-20",
+  "generated_at": "2024-01-01T12:00:00Z",
+  "stakeholders_files": [
+   {
+      "filepath": "./Stakeholders.ocf.json",
+      "md5": "00000000000000000000000000000000"
     }
-  },
-  "as_of": "2024-07-26",
-  "generated_at": "2024-07-26T10:00:00Z",
-  "stakeholders_files": [],
-  "stock_classes_files": [],
-  "stock_legend_templates_files": [],
-  "stock_plans_files": [],
-  "transactions_files": [],
-  "valuations_files": [],
-  "vesting_terms_files": [],
-  "financings_files": [],
-  "documents_files": [],
+  ],
+  "stock_classes_files": [
+   {
+      "filepath": "./StockClasses.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+  ],
+  "stock_legend_templates_files": [
+    {
+      "filepath": "./StockLegendTemplates.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+  ],
+  "stock_plans_files": [
+    {
+      "filepath": "./StockPlans.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+
+  ],
+  "transactions_files": [
+    {
+      "filepath": "./Transactions.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+
+  ],
+  "valuations_files": [
+    {
+      "filepath": "./Valuations.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+
+  ],
+  "vesting_terms_files": [
+    {
+      "filepath": "./VestingTerms.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+
+  ],
+  "financings_files": [
+    {
+      "filepath": "./Financings.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+
+  ],
+  "documents_files": [
+    {
+      "filepath": "./Documents.ocf.json",
+      "md5": "00000000000000000000000000000000"
+    }
+  ],
   "$comment": "Copyright © 2024 Open Cap Table Coalition (https://opencaptablecoalition.com) / Original File: https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/tree/main/schema/files/OCFManifestFile.schema.json"
 }
