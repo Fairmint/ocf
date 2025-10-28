@@ -1,0 +1,477 @@
+# Open Cap Format (OCF)
+
+> OCF is a JSON Schema-based data standard for company capitalization tables developed by the Open Cap Table Coalition. This specification enables AI agents to generate valid OCF objects and transactions from corporate legal documents including incorporation docs, stock purchase agreements, convertible notes, SAFEs, stock option grants, warrant agreements, and board resolutions.
+
+## What is OCF?
+
+OCF represents cap tables as a collection of JSON files, each containing specific object types. The format uses JSON Schema for validation and supports the complete lifecycle of securities from issuance through conversion, exercise, transfer, and cancellation.
+
+## Core Principles for AI Agents
+
+When generating OCF from legal documents:
+
+1. **Every object must have a unique `id`** - Generate UUIDs or use descriptive identifiers
+2. **Set correct `object_type` constant** - Must match schema (e.g., "TX_STOCK_ISSUANCE", "STAKEHOLDER")
+3. **Reference objects by `id`** - Use `stakeholder_id`, `stock_class_id`, `security_id` to link related objects
+4. **Preserve chronological order** - Transactions must be dated correctly and sequenced properly
+5. **Validate required fields** - Each schema defines required properties that must be present
+6. **Use proper enums** - Values like `stakeholder_type`, `class_type` must match defined enum values
+7. **Model transactions, not just state** - OCF is transaction-based; represent each event separately
+
+## OCF File Structure
+
+An OCF package consists of 10 file types, each containing an array of objects:
+
+- **OCF_MANIFEST_FILE** - Root document with issuer info and file references
+- **OCF_STAKEHOLDERS_FILE** - All stakeholders (investors, employees, founders, institutions)
+- **OCF_STOCK_CLASSES_FILE** - Stock classes (Common, Preferred Series A/B/C, etc.)
+- **OCF_STOCK_PLANS_FILE** - Equity compensation plans
+- **OCF_VESTING_TERMS_FILE** - Vesting schedules
+- **OCF_FINANCINGS_FILE** - Financing rounds grouping related issuances
+- **OCF_TRANSACTIONS_FILE** - All transactions (issuances, conversions, exercises, transfers, adjustments)
+- **OCF_VALUATIONS_FILE** - Company valuations
+- **OCF_DOCUMENTS_FILE** - References to source legal documents
+- **OCF_STOCK_LEGEND_TEMPLATES_FILE** - Stock restriction legends
+
+## Object Types Reference
+
+### Foundational Objects (Non-Transactional)
+
+[ISSUER](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Issuer.schema.json): Company whose cap table this represents. Required fields: `legal_name`, `formation_date`, `country_of_formation`, `initial_shares_authorized`
+
+[STAKEHOLDER](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Stakeholder.schema.json): Any person or entity with relationship to the issuer. Required fields: `name`, `stakeholder_type` (INDIVIDUAL or INSTITUTION)
+
+[STOCK_CLASS](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/StockClass.schema.json): Class of stock (Common, Preferred). Required fields: `name`, `class_type`, `default_id_prefix`, `initial_shares_authorized`, `votes_per_share`, `seniority`
+
+[STOCK_PLAN](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/StockPlan.schema.json): Equity compensation plan. Required fields: `plan_name`, `stock_class_id`, `initial_shares_reserved`
+
+[VESTING_TERMS](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/VestingTerms.schema.json): Vesting schedule definition. Required fields: `name`, `vesting_conditions` (array of vesting milestones)
+
+[FINANCING](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Financing.schema.json): Groups related issuances into financing rounds
+
+[VALUATION](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Valuation.schema.json): Company valuation at specific date
+
+[DOCUMENT](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/Document.schema.json): Reference to source legal document
+
+### Transaction Types
+
+All transactions inherit from [Transaction](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/objects/transactions/Transaction.schema.json) primitive and include `date` field.
+
+#### Issuance Transactions
+
+[TX_STOCK_ISSUANCE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/StockIssuance.schema.json): Issue stock to stakeholder. Required: `stock_class_id`, `share_price`, `quantity`, `stock_legend_ids`. Use for: founder shares, investor purchases, exercise of options/warrants
+
+[TX_CONVERTIBLE_ISSUANCE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/ConvertibleIssuance.schema.json): Issue convertible instrument (note or SAFE). Required: `convertible_type` (NOTE or SAFE), `investment_amount`, `conversion_triggers`. Use for: convertible notes, SAFEs
+
+[TX_EQUITY_COMPENSATION_ISSUANCE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json): Issue equity compensation (stock options, RSUs). Required: `stock_class_id`, `compensation_type`, `quantity`. Use for: option grants, RSU grants
+
+[TX_WARRANT_ISSUANCE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/WarrantIssuance.schema.json): Issue warrant. Required: `quantity`, `exercise_price`. Use for: warrant agreements
+
+#### Conversion Transactions
+
+[TX_CONVERTIBLE_CONVERSION](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/conversion/ConvertibleConversion.schema.json): Convert note/SAFE to equity. Required: `security_id`, `resulting_security_ids`. Use for: qualified financing triggers, maturity conversions
+
+[TX_STOCK_CONVERSION](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/conversion/StockConversion.schema.json): Convert stock to different class. Required: `security_id`, `resulting_security_ids`. Use for: voluntary conversions, automatic conversions
+
+#### Exercise Transactions
+
+[TX_EQUITY_COMPENSATION_EXERCISE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/exercise/EquityCompensationExercise.schema.json): Exercise option/RSU. Required: `security_id`, `resulting_security_ids`. Use for: option exercises, RSU settlements
+
+[TX_WARRANT_EXERCISE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/exercise/WarrantExercise.schema.json): Exercise warrant. Required: `security_id`, `resulting_security_ids`
+
+#### Transfer Transactions
+
+[TX_STOCK_TRANSFER](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/transfer/StockTransfer.schema.json): Transfer shares between stakeholders. Required: `security_id`, `quantity`, `resulting_security_ids`. Use for: secondary sales, gifts
+
+#### Adjustment Transactions
+
+[TX_ISSUER_AUTHORIZED_SHARES_ADJUSTMENT](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/adjustment/IssuerAuthorizedSharesAdjustment.schema.json): Adjust total authorized shares. Required: `new_shares_authorized`. Use for: charter amendments
+
+[TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/adjustment/StockClassAuthorizedSharesAdjustment.schema.json): Adjust authorized shares for stock class. Required: `stock_class_id`, `new_shares_authorized`
+
+[TX_STOCK_PLAN_POOL_ADJUSTMENT](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/adjustment/StockPlanPoolAdjustment.schema.json): Adjust option pool size. Required: `stock_plan_id`, `new_shares_reserved`
+
+#### Vesting Transactions
+
+[TX_VESTING_START](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/VestingStart.schema.json): Start vesting clock. Required: `security_id`, `vesting_condition_id`. Use for: employment start date
+
+[TX_VESTING_ACCELERATION](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/VestingAcceleration.schema.json): Accelerate vesting. Required: `security_id`. Use for: change of control, termination without cause
+
+[TX_VESTING_EVENT](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/VestingEvent.schema.json): Milestone vesting event. Required: `security_id`, `vesting_condition_id`
+
+#### Other Transactions
+
+[TX_STOCK_CANCELLATION](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/cancellation/StockCancellation.schema.json): Cancel stock. Required: `security_id`, `quantity`, `reason_text`
+
+[TX_STOCK_REPURCHASE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/repurchase/StockRepurchase.schema.json): Repurchase stock. Required: `security_id`, `quantity`, `price`
+
+[TX_STOCK_ACCEPTANCE](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/acceptance/StockAcceptance.schema.json): Accept previously issued stock. Required: `security_id`
+
+## Legal Document to OCF Mapping
+
+### Incorporation Documents → OCF
+
+**Source:** Articles of Incorporation, Certificate of Incorporation
+
+**Generate:**
+1. ISSUER object with `legal_name`, `formation_date`, `country_of_formation`, `initial_shares_authorized`
+2. STOCK_CLASS object(s) for each authorized class (Common, Preferred)
+3. TX_STOCK_ISSUANCE for founder shares
+
+**Extract:** Company name, formation date/jurisdiction, authorized shares per class, par value, voting rights, liquidation preferences
+
+### Stock Purchase Agreement → OCF
+
+**Source:** Stock Purchase Agreement, Preferred Stock Purchase Agreement
+
+**Generate:**
+1. STAKEHOLDER object(s) for each investor
+2. STOCK_CLASS object if new series (Series A, B, C)
+3. FINANCING object grouping the round
+4. TX_STOCK_ISSUANCE for each investor allocation
+5. VALUATION object if establishing new valuation
+
+**Extract:** Investor names/types, share counts, price per share, liquidation preference multiples, participation caps, conversion rights, anti-dilution terms, board rights
+
+### Convertible Note → OCF
+
+**Source:** Convertible Promissory Note Agreement
+
+**Generate:**
+1. STAKEHOLDER object for noteholder
+2. TX_CONVERTIBLE_ISSUANCE with `convertible_type: "NOTE"`
+3. Include conversion_triggers with maturity date, qualified financing thresholds
+
+**Key properties:**
+- `investment_amount`: Principal amount
+- `conversion_mechanism`: NoteConversionMechanism with interest rates, discount, cap
+- `conversion_triggers`: Array including maturity trigger, qualified financing trigger
+- `interest_rates`: Array of interest rate terms with accrual periods
+
+**Extract:** Principal, interest rate, maturity date, conversion discount percentage, valuation cap, qualified financing definition, interest accrual method
+
+### SAFE → OCF
+
+**Source:** Simple Agreement for Future Equity
+
+**Generate:**
+1. STAKEHOLDER object for SAFE holder
+2. TX_CONVERTIBLE_ISSUANCE with `convertible_type: "SAFE"`
+
+**Key properties:**
+- `conversion_mechanism`: SAFEConversionMechanism with `conversion_discount`, `conversion_valuation_cap`, `conversion_mfn`, `conversion_timing` (PRE_MONEY or POST_MONEY)
+- `conversion_triggers`: Qualified financing trigger, liquidity event trigger
+
+**Extract:** Investment amount, discount rate, valuation cap, MFN clause, pro-rata rights, post-money vs pre-money
+
+### Stock Option Grant → OCF
+
+**Source:** Stock Option Agreement, Notice of Grant
+
+**Generate:**
+1. STOCK_PLAN object (if new plan)
+2. VESTING_TERMS object (if new schedule)
+3. STAKEHOLDER object for grantee (if new)
+4. TX_EQUITY_COMPENSATION_ISSUANCE
+
+**Key properties:**
+- `compensation_type`: OPTION_ISO, OPTION_NSO, or OPTION
+- `exercise_price`: Strike price
+- `quantity`: Number of shares
+- `vesting_terms_id`: Reference to VESTING_TERMS
+- `expiration_date`: Option expiration
+- `early_exercisable`: Boolean for early exercise
+- `termination_exercise_windows`: Object with windows by departure type
+
+**Extract:** Grantee name, shares granted, strike price, grant date, vesting schedule (cliff months, total months, frequency), expiration date, ISO vs NSO, early exercise rights, acceleration triggers, post-termination exercise windows
+
+### Warrant Agreement → OCF
+
+**Source:** Warrant Agreement, Warrant Certificate
+
+**Generate:**
+1. STAKEHOLDER object for holder
+2. TX_WARRANT_ISSUANCE
+
+**Key properties:**
+- `quantity`: Shares issuable
+- `exercise_price`: Strike price
+- `purchase_price`: Warrant purchase price
+- `warrant_expiration_date`: Expiration
+- `exercise_triggers`: Array of exercise conditions
+
+**Extract:** Holder name, shares per warrant, exercise price, expiration, exercise triggers, cashless exercise terms, anti-dilution adjustments
+
+### Board Resolution → OCF
+
+**Source:** Board Minutes, Board Resolutions
+
+**Generate based on resolution type:**
+- **Share Authorization:** TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT with `board_approval_date`
+- **Plan Approval:** STOCK_PLAN object with approval dates
+- **Pool Expansion:** TX_STOCK_PLAN_POOL_ADJUSTMENT
+- **Grant Approval:** TX_EQUITY_COMPENSATION_ISSUANCE with `board_approval_date`
+
+**Extract:** Approval date, stockholder approval date (if required), authorized share changes, pool size changes, specific grants approved
+
+## Transaction Sequencing Patterns
+
+### Incorporation Sequence
+```
+1. Create ISSUER object
+2. Create STOCK_CLASS object(s) for authorized classes
+3. TX_STOCK_ISSUANCE for founder shares
+```
+
+### Series A Financing Sequence
+```
+1. Create STOCK_CLASS for "Series A Preferred"
+2. TX_STOCK_CLASS_AUTHORIZED_SHARES_ADJUSTMENT (if needed)
+3. Create STAKEHOLDER objects for new investors
+4. TX_CONVERTIBLE_CONVERSION (if SAFEs/notes convert)
+5. TX_STOCK_ISSUANCE for each investor
+6. Create FINANCING object grouping issuances
+7. Create VALUATION object
+```
+
+### Option Grant Sequence
+```
+1. Create STOCK_PLAN (if new)
+2. Create VESTING_TERMS (if new schedule)
+3. TX_STOCK_PLAN_POOL_ADJUSTMENT (if expanding pool)
+4. TX_EQUITY_COMPENSATION_ISSUANCE
+5. TX_VESTING_START (on employment start)
+```
+
+### Option Exercise Sequence
+```
+1. TX_EQUITY_COMPENSATION_EXERCISE (references original grant)
+2. TX_STOCK_ISSUANCE (resulting shares, linked via resulting_security_ids)
+```
+
+### SAFE/Note Conversion Sequence
+```
+1. TX_CONVERTIBLE_CONVERSION (references original TX_CONVERTIBLE_ISSUANCE)
+2. TX_STOCK_ISSUANCE (new preferred stock, linked via resulting_security_ids)
+```
+
+### Stock Transfer Sequence
+```
+1. TX_STOCK_TRANSFER (partial or full transfer)
+2. TX_STOCK_ACCEPTANCE (if acceptance required)
+```
+
+## Critical Schema Patterns
+
+### Object References
+
+Objects link via `id` fields:
+- `stakeholder_id` → STAKEHOLDER.id
+- `stock_class_id` → STOCK_CLASS.id
+- `security_id` → Transaction that created the security (TX_*_ISSUANCE.id)
+- `vesting_terms_id` → VESTING_TERMS.id
+- `stock_plan_id` → STOCK_PLAN.id
+
+### Security Lifecycle Tracking
+
+Each issuance transaction creates a security with unique `security_id`. Subsequent transactions reference this `security_id`:
+- Exercise: `security_id` points to option/warrant, `resulting_security_ids` points to new stock
+- Conversion: `security_id` points to convertible, `resulting_security_ids` points to new stock
+- Transfer: `security_id` points to transferred security, `resulting_security_ids` points to recipient's new holding
+- Cancellation: `security_id` points to cancelled security
+
+### Vesting Conditions Structure
+
+VESTING_TERMS contains `vesting_conditions` array. Each condition has:
+- `id`: Unique condition identifier
+- `trigger`: Trigger type (VESTING_START_DATE, VESTING_SCHEDULE_RELATIVE, VESTING_EVENT, etc.)
+- `portion`: Fraction vesting (numerator/denominator)
+- `next_condition_ids`: Links to subsequent conditions
+
+Example 4-year/1-year cliff:
+```json
+{
+  "vesting_conditions": [
+    {
+      "id": "start",
+      "trigger": {"type": "VESTING_START_DATE"},
+      "next_condition_ids": ["cliff"]
+    },
+    {
+      "id": "cliff",
+      "portion": {"numerator": "12", "denominator": "48"},
+      "trigger": {
+        "type": "VESTING_SCHEDULE_RELATIVE",
+        "period": {"length": 12, "type": "MONTHS"},
+        "relative_to_condition_id": "start"
+      },
+      "next_condition_ids": ["monthly"]
+    },
+    {
+      "id": "monthly",
+      "portion": {"numerator": "1", "denominator": "48"},
+      "trigger": {
+        "type": "VESTING_SCHEDULE_RELATIVE",
+        "period": {"length": 1, "type": "MONTHS", "occurrences": 36},
+        "relative_to_condition_id": "cliff"
+      }
+    }
+  ]
+}
+```
+
+### Conversion Mechanisms
+
+Different convertible types use specific conversion mechanisms:
+
+**SAFE:** SAFEConversionMechanism
+- `conversion_discount`: Discount percentage (e.g., 0.20 for 20%)
+- `conversion_valuation_cap`: Cap amount in Monetary type
+- `conversion_mfn`: Boolean for Most Favored Nation
+- `conversion_timing`: PRE_MONEY or POST_MONEY
+
+**Note:** NoteConversionMechanism
+- `interest_rates`: Array of interest rate terms
+- `day_count_convention`: 30/360, ACTUAL/360, ACTUAL/365, etc.
+- `interest_payout`: ACCRUED or PAID_IN_KIND
+- `conversion_discount`: Discount percentage
+- `conversion_valuation_cap`: Cap amount
+
+### Monetary Type
+
+All money amounts use Monetary type:
+```json
+{
+  "amount": "1000000.00",
+  "currency": "USD"
+}
+```
+
+### Numeric Type
+
+Share counts, ratios, decimals use Numeric type (string to preserve precision):
+```json
+"quantity": "100000.00"
+```
+
+### Date Type
+
+Dates use ISO 8601 format (YYYY-MM-DD):
+```json
+"date": "2024-01-15"
+```
+
+## Common Enumerations
+
+### StakeholderType
+- INDIVIDUAL
+- INSTITUTION
+
+### StakeholderRelationshipType
+- FOUNDER
+- EMPLOYEE
+- ADVISOR
+- CONSULTANT
+- INVESTOR
+- DIRECTOR
+- OFFICER
+- PARTNER
+
+### StockClassType
+- COMMON
+- PREFERRED
+
+### ConvertibleType
+- NOTE
+- SAFE
+
+### CompensationType
+- OPTION
+- OPTION_NSO (Non-Qualified)
+- OPTION_ISO (Incentive)
+- RSU (Restricted Stock Unit)
+- RSA (Restricted Stock Award)
+- STOCK_APPRECIATION_RIGHT
+
+### VestingTriggerType
+- VESTING_START_DATE
+- VESTING_SCHEDULE_RELATIVE
+- VESTING_SCHEDULE_ABSOLUTE
+- VESTING_EVENT
+
+## Validation Requirements
+
+AI agents must ensure:
+
+1. **Unique IDs:** Every object has unique `id`
+2. **Valid References:** All `*_id` fields reference existing objects
+3. **Chronological Consistency:** Transaction dates follow logical order (issuance before exercise/conversion)
+4. **Required Fields:** All schema-required fields populated
+5. **Enum Values:** Use exact enum values from schema
+6. **Numeric Precision:** Use string format for Numeric type to avoid floating point errors
+7. **Security Tracking:** Conversions/exercises link via `security_id` and `resulting_security_ids`
+8. **Balance Consistency:** Partial transfers create `balance_security_id` for remainder
+
+## Schema Documentation
+
+### Primary Schemas
+
+[File Schemas](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/files/): Container schemas for each OCF file type
+
+[Object Schemas](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/): Non-transactional objects (Issuer, Stakeholder, StockClass, etc.)
+
+[Transaction Schemas](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/): All transaction types organized by category
+
+[Type Schemas](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/): Reusable type definitions (Monetary, Date, Address, etc.)
+
+[Enum Schemas](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/enums/): Enumeration definitions
+
+[Primitive Schemas](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/primitives/): Base classes for inheritance
+
+### Key Type Definitions
+
+[Monetary](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Monetary.schema.json): Money amounts with currency
+
+[Numeric](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json): Precise decimal numbers as strings
+
+[Date](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json): ISO 8601 dates
+
+[Address](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Address.schema.json): Structured addresses
+
+[ContactInfo](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/ContactInfo.schema.json): Contact information
+
+[Name](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Name.schema.json): Person or entity names
+
+### Conversion-Related Types
+
+[Conversion Mechanisms](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_mechanisms/): Conversion formula types
+
+[Conversion Rights](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_rights/): Stock class conversion rights
+
+[Conversion Triggers](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/conversion_triggers/): Conversion trigger types
+
+### Vesting-Related Types
+
+[Vesting Types](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/vesting/): Vesting condition and trigger types
+
+## Sample Files
+
+[Sample Transactions](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/samples/Transactions.ocf.json): Complete examples of all transaction types
+
+[Sample Stakeholders](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/samples/Stakeholders.ocf.json): Individual and institutional stakeholder examples
+
+[Sample Stock Classes](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/samples/StockClasses.ocf.json): Common and preferred stock examples
+
+[Sample Vesting Terms](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/samples/VestingTerms.ocf.json): Various vesting schedule examples
+
+[Sample Manifest](https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/samples/Manifest.ocf.json): Root manifest file example
+
+## Optional Resources
+
+[OCF Documentation](https://open-cap-table-coalition.github.io/Open-Cap-Format-OCF/): Auto-generated comprehensive documentation
+
+[Coalition Website](https://www.opencaptablecoalition.com/): Open Cap Table Coalition information
+
+[GitHub Repository](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF): Source repository with schemas and tools
+
+[JSON Schema Specification](https://json-schema.org/): Understanding JSON Schema validation
