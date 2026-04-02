@@ -1,0 +1,6 @@
+# Include wiki (overrides .gitignore exclusion)
+!wiki/
+!wiki/**/*
+
+# Exclude wiki's internal git directory
+wiki/.git/
