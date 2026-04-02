@@ -16,3 +16,5 @@ docs/__pycache__
 
 # MkDocs
 site/
+# Wiki (local clone of GitHub wiki)
+wiki/
