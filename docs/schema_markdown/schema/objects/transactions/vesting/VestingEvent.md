@@ -6,11 +6,12 @@
 
 **Data Type:** `Versioned OCF Schema`
 
-This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes below. Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
+This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes in the collapsible sections below (the stable shape is expanded first). Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
 
 **Versions:**
 
-#### Object - Vesting Event Transaction (v1) — ✅ STABLE
+<details open markdown="1">
+<summary>v1 — ✅ STABLE</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/versions/VestingEvent.v1.schema.json`
 
@@ -33,7 +34,10 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 
 **Source Code:** [schema/objects/transactions/vesting/versions/VestingEvent.v1](../../../../../../schema/objects/transactions/vesting/versions/VestingEvent.v1.schema.json)
 
-#### Object - Vesting Event Transaction (v2) — ⚠️ ALPHA
+</details>
+
+<details markdown="1">
+<summary>v2 — ⚠️ ALPHA</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/versions/VestingEvent.v2.schema.json`
 
@@ -55,6 +59,8 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 | event_id    | `STRING`                                                                                                  | Identifier of the named event that fired. Matches `event_id` on the `event_condition` of some VestingStatement on this security's template.                                                                                         | `REQUIRED` |
 
 **Source Code:** [schema/objects/transactions/vesting/versions/VestingEvent.v2](../../../../../../schema/objects/transactions/vesting/versions/VestingEvent.v2.schema.json)
+
+</details>
 
 **Source Code:** [schema/objects/transactions/vesting/VestingEvent](../../../../../../schema/objects/transactions/vesting/VestingEvent.schema.json)
 

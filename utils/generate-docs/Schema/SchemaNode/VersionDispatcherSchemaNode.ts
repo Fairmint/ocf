@@ -101,11 +101,26 @@ export default class VersionDispatcherSchemaNode extends SchemaNode {
   protected markdownExamples = () =>
     this.exampleItemsMarkdown(this.objectTypes());
 
+  /**
+   * The version shapes rendered as collapsible `<details>` sections (one per
+   * version, stable-first, with only the top — most stable — shape `open`).
+   * Raw HTML so it renders both on the published MkDocs site and directly on
+   * GitHub; `markdown="1"` (with the `md_in_html` extension) keeps the property
+   * tables inside rendering on the site, and GitHub strips the attribute while
+   * still parsing the inner markdown. Replaces the old stacked `####` sections,
+   * which grew unreadable once an object had two full property tables in a row.
+   */
   protected versionsMarkdown = (): string =>
     this.versions()
-      .map((version) =>
-        version.markdownVersionSection(this.outputFileAbsolutePath())
-      )
+      .map((version, index) => {
+        const openAttr = index === 0 ? " open" : "";
+        return `<details${openAttr} markdown="1">
+<summary>${version.summaryLabel()}</summary>
+
+${version.markdownVersionContent(this.outputFileAbsolutePath())}
+
+</details>`;
+      })
       .join("\n\n");
 
   /**
@@ -131,7 +146,7 @@ export default class VersionDispatcherSchemaNode extends SchemaNode {
 
 **Data Type:** \`Versioned OCF Schema\`
 
-This schema is a **version dispatcher**: the stable public identifier above resolves (via \`anyOf\`) to one of the versioned shapes below. Consumers that reference this \`$id\` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
+This schema is a **version dispatcher**: the stable public identifier above resolves (via \`anyOf\`) to one of the versioned shapes in the collapsible sections below (the stable shape is expanded first). Consumers that reference this \`$id\` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
 
 **Versions:**
 

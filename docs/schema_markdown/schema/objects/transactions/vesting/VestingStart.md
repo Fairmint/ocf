@@ -6,11 +6,12 @@
 
 **Data Type:** `Versioned OCF Schema`
 
-This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes below. Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
+This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes in the collapsible sections below (the stable shape is expanded first). Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
 
 **Versions:**
 
-#### Object - Vesting Start Transaction (v1) — 🗓️ PLANNED DEPRECATION
+<details open markdown="1">
+<summary>v1 — 🗓️ PLANNED DEPRECATION</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/versions/VestingStart.v1.schema.json`
 
@@ -32,6 +33,8 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 | vesting_condition_id | `STRING`                                                                                                  | Reference to the `id` of a VestingCondition in this security's VestingTerms. This condition should have a trigger type of `VESTING_START_DATE`.                                                                                                                                                                                                                                                                                                                                                             | `REQUIRED` |
 
 **Source Code:** [schema/objects/transactions/vesting/versions/VestingStart.v1](../../../../../../schema/objects/transactions/vesting/versions/VestingStart.v1.schema.json)
+
+</details>
 
 **Source Code:** [schema/objects/transactions/vesting/VestingStart](../../../../../../schema/objects/transactions/vesting/VestingStart.schema.json)
 

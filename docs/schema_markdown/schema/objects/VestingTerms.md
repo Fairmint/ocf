@@ -6,11 +6,12 @@
 
 **Data Type:** `Versioned OCF Schema`
 
-This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes below. Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
+This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes in the collapsible sections below (the stable shape is expanded first). Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
 
 **Versions:**
 
-#### Object - Vesting Terms (v1) — ✅ STABLE
+<details open markdown="1">
+<summary>v1 — ✅ STABLE</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/versions/VestingTerms.v1.schema.json`
 
@@ -34,7 +35,10 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 
 **Source Code:** [schema/objects/versions/VestingTerms.v1](../../../../schema/objects/versions/VestingTerms.v1.schema.json)
 
-#### Object - Vesting Terms (v2) — ⚠️ ALPHA
+</details>
+
+<details markdown="1">
+<summary>v2 — ⚠️ ALPHA</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/versions/VestingTerms.v2.schema.json`
 
@@ -54,6 +58,8 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 | statements  | **Array of ONE OF the Following Types/Objs:**</br>&bull; [schema/types/vesting/ScheduledVestingStatement](../types/vesting/ScheduledVestingStatement.md)</br>&bull;[schema/types/vesting/MilestoneVestingStatement](../types/vesting/MilestoneVestingStatement.md) | Ordered list of vesting statements. They chain implicitly by their `order` field rather than via explicit graph edges. | `REQUIRED` |
 
 **Source Code:** [schema/objects/versions/VestingTerms.v2](../../../../schema/objects/versions/VestingTerms.v2.schema.json)
+
+</details>
 
 Vesting Terms objects support a structured representation of security vesting. This is accomplished
 by expressing security vesting as a graph of "Vesting Conditions", and then recording vesting

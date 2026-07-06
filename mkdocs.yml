@@ -23,6 +23,9 @@ markdown_extensions:
   - toc:
       permalink: "#"
   - attr_list
+  # Lets Markdown (e.g. the version property tables) render inside raw <details>
+  # blocks emitted for a version dispatcher's collapsible version sections.
+  - md_in_html
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite

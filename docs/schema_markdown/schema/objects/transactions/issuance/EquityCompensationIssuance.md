@@ -6,11 +6,12 @@
 
 **Data Type:** `Versioned OCF Schema`
 
-This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes below. Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
+This schema is a **version dispatcher**: the stable public identifier above resolves (via `anyOf`) to one of the versioned shapes in the collapsible sections below (the stable shape is expanded first). Consumers that reference this `$id` accept any shape listed here during its transition window. Each shape is self-contained and flagged with its stability.
 
 **Versions:**
 
-#### Object - Equity Compensation Issuance Transaction (v1) — ✅ STABLE
+<details open markdown="1">
+<summary>v1 — ✅ STABLE</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/versions/EquityCompensationIssuance.v1.schema.json`
 
@@ -50,7 +51,10 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 
 **Source Code:** [schema/objects/transactions/issuance/versions/EquityCompensationIssuance.v1](../../../../../../schema/objects/transactions/issuance/versions/EquityCompensationIssuance.v1.schema.json)
 
-#### Object - Equity Compensation Issuance Transaction (v2) — ⚠️ ALPHA
+</details>
+
+<details markdown="1">
+<summary>v2 — ⚠️ ALPHA</summary>
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/issuance/versions/EquityCompensationIssuance.v2.schema.json`
 
@@ -90,6 +94,8 @@ This schema is a **version dispatcher**: the stable public identifier above reso
 | termination_exercise_windows | [ [schema/types/TerminationWindow](../../../types/TerminationWindow.md) ]                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Exercise periods applicable after a termination, by reason.                                                                                                                                                                                                                                                                                                                                                                                                                                      | `REQUIRED` |
 
 **Source Code:** [schema/objects/transactions/issuance/versions/EquityCompensationIssuance.v2](../../../../../../schema/objects/transactions/issuance/versions/EquityCompensationIssuance.v2.schema.json)
+
+</details>
 
 **Source Code:** [schema/objects/transactions/issuance/EquityCompensationIssuance](../../../../../../schema/objects/transactions/issuance/EquityCompensationIssuance.schema.json)
 
