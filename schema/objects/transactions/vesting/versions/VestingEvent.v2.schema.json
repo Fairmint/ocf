@@ -10,6 +10,13 @@
       "type": "string",
       "description": "Identifier for this transaction."
     },
+    "comments": {
+      "type": "array",
+      "description": "Unstructured text comments related to and stored for the object.",
+      "items": {
+        "type": "string"
+      }
+    },
     "object_type": {
       "const": "TX_VESTING_EVENT"
     },

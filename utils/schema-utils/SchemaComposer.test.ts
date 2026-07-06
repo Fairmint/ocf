@@ -1012,6 +1012,44 @@ describe("SchemaComposer", () => {
       };
       expect(pruneDroppedReferences(schema, dropped, new Set())).toBe(schema);
     });
+
+    it("removes a dropped-$id entry from an allOf, not just anyOf/oneOf", () => {
+      const schema: RawSchemaJson = {
+        $id: "test://file",
+        allOf: [{ $ref: "test://gone" }, { $ref: "test://keep" }],
+      };
+      const out = pruneDroppedReferences(schema, dropped, new Set());
+      expect(out.allOf).toEqual([{ $ref: "test://keep" }]);
+    });
+
+    it("removes a union entry whose $ref is dropped even when it has sibling keys", () => {
+      // draft-07 ignores keywords beside a $ref, so `{ $ref, description }` is
+      // effectively just the ref and must be dropped like a bare one.
+      const schema: RawSchemaJson = {
+        $id: "test://file",
+        oneOf: [
+          { $ref: "test://gone", description: "legacy" },
+          { $ref: "test://keep" },
+        ],
+      };
+      const out = pruneDroppedReferences(schema, dropped, new Set());
+      expect(out.oneOf).toEqual([{ $ref: "test://keep" }]);
+    });
+
+    it("drops an emptied combinator keyword rather than leaving an unsatisfiable oneOf: []", () => {
+      const schema: RawSchemaJson = {
+        $id: "test://file",
+        properties: {
+          thing: {
+            type: "object",
+            oneOf: [{ $ref: "test://gone" }],
+          },
+        },
+      };
+      const out = pruneDroppedReferences(schema, dropped, new Set());
+      expect(out.properties!.thing).not.toHaveProperty("oneOf");
+      expect(out.properties!.thing.type).toBe("object");
+    });
   });
 
   describe("omitEmptyComposedContainers", () => {

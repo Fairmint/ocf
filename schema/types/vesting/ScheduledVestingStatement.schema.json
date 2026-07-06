@@ -3,6 +3,7 @@
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/vesting/ScheduledVestingStatement.schema.json",
   "title": "Type - Scheduled Vesting Statement",
   "description": "A vesting statement that vests on a time grid: it always carries a `schedule`, and may also carry an `event_condition` (DATE when bare, HYBRID when gated). One of the two shapes a `VestingTerms` (v2) statement can take.",
+  "x-ocf-stability": "alpha",
   "type": "object",
   "properties": {
     "order": {

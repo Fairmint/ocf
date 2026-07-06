@@ -10,6 +10,13 @@
       "type": "string",
       "description": "Identifier the issuance's `vesting_template_id` references."
     },
+    "comments": {
+      "type": "array",
+      "description": "Unstructured text comments related to and stored for the object.",
+      "items": {
+        "type": "string"
+      }
+    },
     "object_type": {
       "const": "VESTING_TERMS"
     },

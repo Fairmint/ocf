@@ -515,21 +515,17 @@ export function applyExperimentalMode(
   const collapsedByDispatcherId = new Map<string, RawSchemaJson>();
   // Public `$id`s removed wholesale (not collapsed). Two sources, both only
   // under `unstable`: a dispatcher whose only shapes are `planned_deprecation`,
-  // and a standalone planned-for-deprecation schema (see below). They may still
-  // be referenced by survivors (e.g. a transactions-file `oneOf`) and their
-  // `object_type`s may still sit in enums, so both are pruned afterward.
-  const droppedDispatcherIds = new Set<string>();
-  const droppedStandaloneIds = new Set<string>();
+  // and a standalone planned-for-deprecation schema (see below). Both are
+  // treated identically afterward — dropped, then their `$ref`s and
+  // `object_type`s pruned from the survivors — so they share one set.
+  const droppedPublicIds = new Set<string>();
   const prunedObjectTypes = new Set<string>();
 
   // Every `$id` that is a versioned shape behind some dispatcher — excluded
   // from the standalone-drop pass below, since the dispatcher loop owns them.
-  const versionShapeIds = new Set<string>();
-  for (const schema of rawSchemas) {
-    if (isVersionWrapper(schema)) {
-      for (const ref of versionRefsOf(schema)) versionShapeIds.add(ref);
-    }
-  }
+  // Reuses `versionShapeOwnerMap`, the single source of truth for what counts as
+  // a versioned shape, so this pass can't disagree with the rest of the tooling.
+  const versionShapeIds = new Set(versionShapeOwnerMap(rawSchemas).keys());
 
   for (const schema of rawSchemas) {
     if (!isVersionWrapper(schema)) continue;
@@ -570,7 +566,7 @@ export function applyExperimentalMode(
           prunedObjectTypes.add(ot);
         }
       }
-      droppedDispatcherIds.add(schema.$id);
+      droppedPublicIds.add(schema.$id);
       continue;
     }
 
@@ -601,18 +597,12 @@ export function applyExperimentalMode(
       if (isVersionWrapper(schema)) continue;
       if (versionShapeIds.has(schema.$id)) continue;
       if (stabilityOf(schema) !== "planned_deprecation") continue;
-      droppedStandaloneIds.add(schema.$id);
+      droppedPublicIds.add(schema.$id);
       for (const ot of objectTypeValues(schema.properties?.object_type)) {
         prunedObjectTypes.add(ot);
       }
     }
   }
-
-  // Union of every wholesale-dropped public `$id` (dispatchers + standalones).
-  const droppedPublicIds = new Set<string>([
-    ...droppedDispatcherIds,
-    ...droppedStandaloneIds,
-  ]);
 
   if (collapsedByDispatcherId.size === 0 && droppedPublicIds.size === 0) {
     return rawSchemas;
@@ -632,8 +622,10 @@ export function applyExperimentalMode(
 
   // A wholesale drop leaves the rest of the set pointing at a `$id` (and listing
   // an `object_type`) that no longer exists. Prune both so every surviving
-  // schema still resolves, composes, codegens, and documents cleanly.
-  if (droppedPublicIds.size === 0 && prunedObjectTypes.size === 0) {
+  // schema still resolves, composes, codegens, and documents cleanly. With no
+  // wholesale drop there is nothing to prune (`prunedObjectTypes` is only ever
+  // populated alongside `droppedPublicIds`), so the survivors pass through.
+  if (droppedPublicIds.size === 0) {
     return result;
   }
   return result.map((schema) =>
@@ -643,8 +635,8 @@ export function applyExperimentalMode(
 
 /**
  * Strip every trace of a dropped dispatcher from a surviving schema:
- *   - any `anyOf`/`oneOf` entry that is a bare `$ref` to a dropped `$id`
- *     (recursively, so a `oneOf` nested under `properties.items` is handled);
+ *   - any `anyOf`/`oneOf`/`allOf` entry that is a `$ref` to a dropped `$id`
+ *     (recursively, so a combinator nested under `properties.items` is handled);
  *   - any top-level `enum` value that is a dropped `object_type` (the
  *     `ObjectType` enum).
  * Returns the input unchanged (same reference) when nothing matches, so the pass
@@ -673,8 +665,34 @@ export function pruneDroppedReferences(
   return next;
 }
 
-/** Recursively drop bare-`$ref` `anyOf`/`oneOf` entries that target a dropped
- *  `$id`. Returns `{ changed }` so callers avoid cloning untouched subtrees. */
+/** Composition keywords whose array entries are subschemas we can prune one at
+ *  a time (a dropped branch just leaves the union/intersection). */
+const COMBINATOR_KEYWORDS: ReadonlySet<string> = new Set([
+  "anyOf",
+  "oneOf",
+  "allOf",
+]);
+
+/** True when a subschema references a dropped `$id`. draft-07 ignores keywords
+ *  that sit beside a `$ref`, so an entry like `{ $ref, description }` is
+ *  effectively just the ref and counts as dropped too. */
+function refsDroppedId(
+  entry: unknown,
+  droppedRefIds: ReadonlySet<string>
+): boolean {
+  return (
+    !!entry &&
+    typeof entry === "object" &&
+    typeof (entry as { $ref?: unknown }).$ref === "string" &&
+    droppedRefIds.has((entry as { $ref: string }).$ref)
+  );
+}
+
+/** Recursively drop `anyOf`/`oneOf`/`allOf` entries that reference a dropped
+ *  `$id`. If pruning empties a combinator, the keyword is removed rather than
+ *  left as an unsatisfiable `oneOf: []`/`anyOf: []` (an empty `allOf` is
+ *  likewise redundant). Returns `{ changed }` so callers avoid cloning
+ *  untouched subtrees. */
 function deepPruneRefs(
   node: unknown,
   droppedRefIds: ReadonlySet<string>
@@ -692,20 +710,19 @@ function deepPruneRefs(
     let changed = false;
     const out: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(node as Record<string, unknown>)) {
-      if ((key === "anyOf" || key === "oneOf") && Array.isArray(val)) {
+      if (COMBINATOR_KEYWORDS.has(key) && Array.isArray(val)) {
         const kept = val.filter(
-          (entry) =>
-            !(
-              entry &&
-              typeof entry === "object" &&
-              Object.keys(entry as object).length === 1 &&
-              typeof (entry as { $ref?: unknown }).$ref === "string" &&
-              droppedRefIds.has((entry as { $ref: string }).$ref)
-            )
+          (entry) => !refsDroppedId(entry, droppedRefIds)
         );
         if (kept.length !== val.length) changed = true;
         const r = deepPruneRefs(kept, droppedRefIds);
         if (r.changed) changed = true;
+        // An emptied combinator is dropped, not emitted: an empty `oneOf`/
+        // `anyOf` matches nothing (unsatisfiable) and an empty `allOf` is inert.
+        if ((r.value as unknown[]).length === 0) {
+          changed = true;
+          continue;
+        }
         out[key] = r.value;
         continue;
       }

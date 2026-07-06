@@ -3,6 +3,7 @@
   "$id": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/vesting/MilestoneVestingStatement.schema.json",
   "title": "Type - Milestone Vesting Statement",
   "description": "A pure-milestone vesting statement: no time schedule, so it vests entirely when its `event_condition` fires. `additionalProperties: false` and the omission of `schedule` make a stray schedule unrepresentable on this shape. One of the two shapes a `VestingTerms` (v2) statement can take.",
+  "x-ocf-stability": "alpha",
   "type": "object",
   "properties": {
     "order": {
