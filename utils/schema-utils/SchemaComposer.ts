@@ -458,13 +458,16 @@ export function selectVersionForMode(
 
 /**
  * Re-home a selected versioned shape onto its dispatcher's stable public `$id`,
- * producing a normal standalone schema. The dispatcher's public identity
- * (`title` / `description`) wins when non-empty, otherwise the selected shape's
- * own title/description is kept; the union body and the
- * `x-ocf-version-dispatcher` marker are dropped (they belong to the dispatcher,
- * not the shape). The selected shape's own `allOf`, `properties`, `required`,
- * `additionalProperties`, and `x-ocf-stability` carry through untouched so
- * downstream composition/codegen/docs treat it like any other schema.
+ * producing a normal standalone schema. The dispatcher's public NAME (`title`)
+ * wins when non-empty — it carries no `(v#)` suffix — but the `description`
+ * stays the selected shape's own: a dispatcher's description narrates the
+ * union ("accepts v1 or v2"), which is false for a collapsed single shape.
+ * The dispatcher's description is only a fallback for a shape without one.
+ * The union body and the `x-ocf-version-dispatcher` marker are dropped (they
+ * belong to the dispatcher, not the shape). The selected shape's own `allOf`,
+ * `properties`, `required`, `additionalProperties`, and `x-ocf-stability`
+ * carry through untouched so downstream composition/codegen/docs treat it
+ * like any other schema.
  */
 function collapseDispatcherToVersion(
   dispatcher: RawSchemaJson,
@@ -472,7 +475,9 @@ function collapseDispatcherToVersion(
 ): RawSchemaJson {
   const collapsed: RawSchemaJson = { ...version, $id: dispatcher.$id };
   if (dispatcher.title) collapsed.title = dispatcher.title;
-  if (dispatcher.description) collapsed.description = dispatcher.description;
+  if (!collapsed.description && dispatcher.description) {
+    collapsed.description = dispatcher.description;
+  }
   delete (collapsed as Record<string, unknown>)[VERSION_DISPATCHER_KEYWORD];
   delete (collapsed as Record<string, unknown>).anyOf;
   return collapsed;
@@ -490,12 +495,13 @@ function collapseDispatcherToVersion(
  *     every versioned shape it owned is removed from the set. After this pass
  *     there are no dispatchers left, so downstream tooling sees only ordinary
  *     schemas and needs no per-mode special-casing.
- *   - `unstable` additionally drops every **standalone** schema (a type / enum /
- *     primitive that is neither a dispatcher nor a versioned shape) flagged
- *     `x-ocf-stability: "planned_deprecation"`. These are the dependency closure
- *     of the shapes being superseded — present and active in `none` /
- *     `compatibility`, but absent from the forward-looking `unstable` surface,
- *     exactly like a planned-deprecation-only dispatcher.
+ *   - `none` / `unstable` additionally drop every **standalone** schema (a
+ *     type / enum / primitive that is neither a dispatcher nor a versioned
+ *     shape) whose stability has no place in that surface: `unstable` drops
+ *     `planned_deprecation` schemas (the dependency closure of the shapes
+ *     being superseded), and `none` symmetrically drops pre-release
+ *     `alpha`/`beta` schemas (the dependency closure of shapes the stable
+ *     surface doesn't select). `compatibility` keeps everything.
  *
  * Schemas that reference a dispatcher's public `$id` keep working: that `$id`
  * now resolves to the collapsed shape. (Per the VersionWrapper convention,
@@ -587,20 +593,25 @@ export function applyExperimentalMode(
     );
   }
 
-  // `unstable` also drops standalone planned-for-deprecation schemas — a type /
-  // enum / primitive that is neither a dispatcher nor a versioned shape. The
-  // forward-looking surface omits the dependency closure of the superseded
-  // shapes, mirroring how a planned-deprecation-only dispatcher disappears.
-  // (`none` / `compatibility` keep them: planned_deprecation is still current.)
-  if (mode === "unstable") {
-    for (const schema of rawSchemas) {
-      if (isVersionWrapper(schema)) continue;
-      if (versionShapeIds.has(schema.$id)) continue;
-      if (stabilityOf(schema) !== "planned_deprecation") continue;
-      droppedPublicIds.add(schema.$id);
-      for (const ot of objectTypeValues(schema.properties?.object_type)) {
-        prunedObjectTypes.add(ot);
-      }
+  // Each collapsed surface also drops standalone schemas — a type / enum /
+  // primitive that is neither a dispatcher nor a versioned shape — whose
+  // stability has no place in it, mirroring which versioned shapes the mode
+  // refuses to select: `unstable` (the forward-looking surface) omits
+  // planned-for-deprecation schemas, and `none` (the current stable surface)
+  // omits pre-release alpha/beta schemas. Both directions cover the dependency
+  // closure of shapes the mode's dispatchers don't expose. (`compatibility`
+  // keeps everything.)
+  const droppedStandaloneStabilities: ReadonlySet<Stability> =
+    mode === "unstable"
+      ? new Set<Stability>(["planned_deprecation"])
+      : new Set<Stability>(["alpha", "beta"]);
+  for (const schema of rawSchemas) {
+    if (isVersionWrapper(schema)) continue;
+    if (versionShapeIds.has(schema.$id)) continue;
+    if (!droppedStandaloneStabilities.has(stabilityOf(schema))) continue;
+    droppedPublicIds.add(schema.$id);
+    for (const ot of objectTypeValues(schema.properties?.object_type)) {
+      prunedObjectTypes.add(ot);
     }
   }
 
@@ -625,11 +636,68 @@ export function applyExperimentalMode(
   // schema still resolves, composes, codegens, and documents cleanly. With no
   // wholesale drop there is nothing to prune (`prunedObjectTypes` is only ever
   // populated alongside `droppedPublicIds`), so the survivors pass through.
-  if (droppedPublicIds.size === 0) {
-    return result;
-  }
-  return result.map((schema) =>
-    pruneDroppedReferences(schema, droppedPublicIds, prunedObjectTypes)
+  const survivors =
+    droppedPublicIds.size === 0
+      ? result
+      : result.map((schema) =>
+          pruneDroppedReferences(schema, droppedPublicIds, prunedObjectTypes)
+        );
+
+  // Anything still pointing at a dropped `$id` after pruning (e.g. a property's
+  // direct `$ref`) cannot be silently repaired — fail fast with the referencer
+  // and target named rather than let it resurface as an opaque missing-$ref
+  // error downstream.
+  assertNoDanglingDroppedRefs(
+    survivors,
+    new Set([...droppedPublicIds, ...droppedVersionIds]),
+    mode
+  );
+  return survivors;
+}
+
+/**
+ * Fail fast when a surviving schema still references an `$id` that was removed
+ * from the set. Refs inside `anyOf`/`oneOf`/`allOf` are pruned automatically
+ * (see `pruneDroppedReferences`); anything left — e.g. a property's direct
+ * `$ref` to a dropped standalone schema, or any ref to a removed `.v#` version
+ * shape (which nothing may reference, per the VersionWrapper convention) —
+ * would otherwise resurface downstream as an opaque missing-`$ref` failure in
+ * composition, codegen, or docs. The error names each referencer and dropped
+ * target so the fix is obvious: keep the dropped schema in this surface
+ * (adjust its `x-ocf-stability`) or update the referencing schema.
+ */
+function assertNoDanglingDroppedRefs(
+  survivors: RawSchemaJson[],
+  droppedIds: ReadonlySet<string>,
+  mode: ExperimentalMode
+): void {
+  if (droppedIds.size === 0) return;
+
+  const violations: string[] = [];
+  const scan = (node: unknown, ownerId: string): void => {
+    if (Array.isArray(node)) {
+      for (const item of node) scan(item, ownerId);
+      return;
+    }
+    if (!node || typeof node !== "object") return;
+    const ref = (node as { $ref?: unknown }).$ref;
+    if (typeof ref === "string" && droppedIds.has(ref)) {
+      violations.push(`${ownerId} -> ${ref}`);
+    }
+    for (const value of Object.values(node as Record<string, unknown>)) {
+      scan(value, ownerId);
+    }
+  };
+  for (const schema of survivors) scan(schema, schema.$id);
+
+  if (violations.length === 0) return;
+  throw new Error(
+    `--experimental=${mode}: ${violations.length} reference(s) to schemas ` +
+      `dropped from this surface remain after pruning:\n  ` +
+      `${violations.join("\n  ")}\n` +
+      `Refs inside anyOf/oneOf/allOf are pruned automatically; a direct $ref ` +
+      `cannot be. Either keep the dropped schema in this surface (adjust its ` +
+      `x-ocf-stability) or update the referencing schema.`
   );
 }
 

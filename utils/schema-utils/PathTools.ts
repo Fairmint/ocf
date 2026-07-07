@@ -19,11 +19,14 @@ export const isFile = (path_string: string) => !!path.extname(path_string);
  * @returns String -> The relative path to the basename of the schema file represented by schema_path
  */
 export const basenameRelativePathToSchemaDir = (schema_path: string) => {
-  return schemaPathRelativeToSchemaDir(
-    `${directoryFromSchemaPath(schema_path)}/${basenameFromSchemaPath(
-      schema_path
-    )}`
-  );
+  // Resolve the schema's directory relative to the schema dir, then append the
+  // extension-stripped basename. The basename must not round-trip through
+  // `relativePathToOtherPath`: its file-vs-directory guess reads a multi-dot
+  // basename like `VestingTerms.v1` as a file with extension `.v1` and
+  // truncates it to the parent directory.
+  const dir = schemaPathRelativeToSchemaDir(schema_path);
+  const basename = basenameFromSchemaPath(schema_path);
+  return dir === "." ? basename : `${dir}/${basename}`;
 };
 
 /**

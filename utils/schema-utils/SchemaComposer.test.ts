@@ -710,11 +710,25 @@ describe("SchemaComposer", () => {
       // It IS the selected (v1/stable) shape, re-homed onto the public id...
       expect(collapsed.properties?.field_v1).toEqual({ type: "string" });
       expect(collapsed.type).toBe("object");
-      // ...with the dispatcher's public identity and no union/marker leftovers.
+      // ...with the dispatcher's public NAME but the shape's own description
+      // (the dispatcher's description narrates the union — "accepts v1 or v2"
+      // — which is false for a collapsed single shape), and no union/marker
+      // leftovers.
       expect(collapsed.title).toBe("Demo");
-      expect(collapsed.description).toBe("Public Demo dispatcher");
+      expect(collapsed.description).toBe("Demo shape v1");
       expect(collapsed.anyOf).toBeUndefined();
       expect((collapsed as any)["x-ocf-version-dispatcher"]).toBeUndefined();
+    });
+
+    it("falls back to the dispatcher's description when the shape has none", () => {
+      const input = [
+        demoDispatcher([1]),
+        { ...vShape(1, "stable"), description: undefined } as RawSchemaJson,
+      ];
+      const collapsed = applyExperimentalMode(input, "none").find(
+        (s) => s.$id === "test://demo/Demo.schema.json"
+      )!;
+      expect(collapsed.description).toBe("Public Demo dispatcher");
     });
 
     it("unstable: collapses to the latest alpha/beta shape", () => {
@@ -966,6 +980,150 @@ describe("SchemaComposer", () => {
         "unstable"
       );
       expect(result.map((s) => s.$id)).toEqual([]);
+    });
+  });
+
+  describe("standalone pre-release (alpha/beta) under `none`", () => {
+    // The mirror of the planned_deprecation rule: `none` is the current stable
+    // surface, so a standalone alpha/beta type — the dependency closure of a
+    // not-yet-selected pre-release shape — has no place in it, just as a
+    // planned-for-deprecation type has no place in `unstable`.
+    const alphaType: RawSchemaJson = {
+      $id: "test://types/NewAxis.schema.json",
+      title: "New Axis",
+      ["x-ocf-stability"]: "alpha",
+      type: "object",
+      properties: { y: { type: "string" } },
+      additionalProperties: false,
+    };
+    const stableType: RawSchemaJson = {
+      $id: "test://types/Current.schema.json",
+      type: "object",
+      properties: { x: { type: "string" } },
+    };
+    const consumer: RawSchemaJson = {
+      $id: "test://types/Consumer.schema.json",
+      type: "object",
+      properties: {
+        thing: {
+          oneOf: [
+            { $ref: "test://types/Current.schema.json" },
+            { $ref: "test://types/NewAxis.schema.json" },
+          ],
+        },
+      },
+    };
+    const input = () => [alphaType, stableType, consumer];
+
+    it("compatibility keeps it (input unchanged)", () => {
+      const set = input();
+      expect(applyExperimentalMode(set, "compatibility")).toBe(set);
+    });
+
+    it("unstable keeps it — pre-release types ARE the forward-looking surface", () => {
+      const ids = applyExperimentalMode(input(), "unstable").map((s) => s.$id);
+      expect(ids).toContain("test://types/NewAxis.schema.json");
+    });
+
+    it("none drops it and prunes the dangling oneOf $ref from survivors", () => {
+      const result = applyExperimentalMode(input(), "none");
+      const ids = result.map((s) => s.$id);
+      expect(ids).not.toContain("test://types/NewAxis.schema.json");
+      expect(ids).toContain("test://types/Current.schema.json");
+      const consumerOut = result.find(
+        (s) => s.$id === "test://types/Consumer.schema.json"
+      )!;
+      const refs = (
+        consumerOut.properties!.thing.oneOf as Array<{ $ref: string }>
+      ).map((e) => e.$ref);
+      expect(refs).toEqual(["test://types/Current.schema.json"]);
+    });
+
+    it("none drops a standalone beta type the same way", () => {
+      const beta = {
+        ...alphaType,
+        ["x-ocf-stability"]: "beta",
+      } as RawSchemaJson;
+      const ids = applyExperimentalMode(
+        [beta, stableType, consumer],
+        "none"
+      ).map((s) => s.$id);
+      expect(ids).not.toContain("test://types/NewAxis.schema.json");
+    });
+
+    it("does NOT treat a dispatcher-owned alpha version shape as a standalone drop", () => {
+      // Demo.v2 is alpha but owned by the dispatcher: under `none` the
+      // dispatcher collapses to the stable v1 and the alpha shape leaves as a
+      // version shape, not via the standalone pass.
+      const result = applyExperimentalMode(
+        [demoDispatcher([1, 2]), vShape(1, "stable"), vShape(2, "alpha")],
+        "none"
+      );
+      expect(result.map((s) => s.$id)).toEqual([
+        "test://demo/Demo.schema.json",
+      ]);
+    });
+  });
+
+  describe("dangling-reference detection after a drop", () => {
+    // Refs inside anyOf/oneOf/allOf are pruned automatically; a DIRECT `$ref`
+    // (e.g. from a property) to a dropped schema cannot be silently fixed and
+    // must fail fast with a clear error instead of surfacing later as a
+    // confusing missing-$ref failure in composition/codegen/docs.
+    const plannedType: RawSchemaJson = {
+      $id: "test://types/OldThing.schema.json",
+      ["x-ocf-stability"]: "planned_deprecation",
+      type: "object",
+      properties: { x: { type: "string" } },
+    };
+
+    it("throws naming referencer and target when a survivor's property $ref points at a dropped schema", () => {
+      const consumer: RawSchemaJson = {
+        $id: "test://types/Consumer.schema.json",
+        type: "object",
+        properties: {
+          thing: { $ref: "test://types/OldThing.schema.json" },
+        },
+      };
+      expect(() =>
+        applyExperimentalMode([plannedType, consumer], "unstable")
+      ).toThrow(/Consumer\.schema\.json[\s\S]*OldThing\.schema\.json/);
+    });
+
+    it("does not throw when the referencing schema is itself dropped", () => {
+      // OldThing2 references OldThing, but both are planned_deprecation and
+      // leave the `unstable` surface together — no dangling ref remains.
+      const plannedConsumer: RawSchemaJson = {
+        $id: "test://types/OldThing2.schema.json",
+        ["x-ocf-stability"]: "planned_deprecation",
+        type: "object",
+        properties: {
+          thing: { $ref: "test://types/OldThing.schema.json" },
+        },
+      };
+      const ids = applyExperimentalMode(
+        [plannedType, plannedConsumer],
+        "unstable"
+      ).map((s) => s.$id);
+      expect(ids).toEqual([]);
+    });
+
+    it("throws when a survivor directly references a removed `.v#` version shape", () => {
+      // Per the VersionWrapper convention nothing may reference a `.v#` id;
+      // a violation dangles once the dispatcher collapses, so it fails fast.
+      const consumer: RawSchemaJson = {
+        $id: "test://types/Consumer.schema.json",
+        type: "object",
+        properties: {
+          demo: { $ref: "test://demo/versions/Demo.v1.schema.json" },
+        },
+      };
+      expect(() =>
+        applyExperimentalMode(
+          [demoDispatcher([1]), vShape(1, "stable"), consumer],
+          "none"
+        )
+      ).toThrow(/Demo\.v1\.schema\.json/);
     });
   });
 
