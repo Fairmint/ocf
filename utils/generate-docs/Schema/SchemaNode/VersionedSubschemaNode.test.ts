@@ -122,13 +122,13 @@ describe("Version dispatchers at any level", () => {
       );
     });
 
-    it("renders each type version as a section with an OCF TYPE body + stability", () => {
+    it("renders each type version as a collapsible section with an OCF TYPE body + stability", () => {
       const md = schema()
         .findSchemaNodeById(TYPE_DISPATCHER.$id)
         .markdownOutput();
 
-      expect(md).toContain("#### Type - Vesting Condition (v1)");
-      expect(md).toContain("#### Type - Vesting Condition (v2)");
+      expect(md).toContain("<summary>v1 — ");
+      expect(md).toContain("<summary>v2 — ");
       expect(md).toContain("**Data Type:** `OCF TYPE`");
       expect(md).toContain("**Stability:** `stable`");
       expect(md).toContain("**Stability:** `alpha`");
@@ -150,13 +150,13 @@ describe("Version dispatchers at any level", () => {
   describe("enum-level dispatcher", () => {
     const schema = () => build([ENUM_DISPATCHER, ENUM_V1, ENUM_V2]);
 
-    it("renders each enum version as a section with its value list + stability", () => {
+    it("renders each enum version as a collapsible section with its value list + stability", () => {
       const md = schema()
         .findSchemaNodeById(ENUM_DISPATCHER.$id)
         .markdownOutput();
 
-      expect(md).toContain("#### Enum - Vesting Trigger Type (v1)");
-      expect(md).toContain("#### Enum - Vesting Trigger Type (v2)");
+      expect(md).toContain("<summary>v1 — ");
+      expect(md).toContain("<summary>v2 — ");
       expect(md).toContain("**Data Type:** `Enum`");
       expect(md).toContain("&bull; VESTING_START_DATE");
       // v2 added a value; it should appear in the v2 section.
@@ -169,7 +169,7 @@ describe("Version dispatchers at any level", () => {
       const md = schema()
         .findSchemaNodeById(ENUM_DISPATCHER.$id)
         .markdownOutput();
-      expect(md.indexOf("(v1)")).toBeLessThan(md.indexOf("(v2)"));
+      expect(md.indexOf("<summary>v1")).toBeLessThan(md.indexOf("<summary>v2"));
     });
   });
 

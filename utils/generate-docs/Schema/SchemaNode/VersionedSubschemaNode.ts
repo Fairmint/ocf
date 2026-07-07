@@ -1,7 +1,9 @@
 import { relativePathToOtherPath } from "../../../schema-utils/PathTools.js";
 import {
   Stability,
+  STABILITY_BADGE,
   STABILITY_KEYWORD,
+  STABILITY_NOTE,
   stabilityOf,
   versionLabelOf,
 } from "../../../schema-utils/SchemaComposer.js";
@@ -15,25 +17,6 @@ export interface VersionedSubschemaNodeJson extends SchemaNodeJson {
   // (object_type, additionalProperties, enum, format, ...).
   [extra: string]: any;
 }
-
-/** Short, human-readable badge + note for each stability level. Deprecated and
- *  alpha shapes get a visually distinct marker so a reader can tell at a glance
- *  which shape is current, which is on the way out, and which is not final. */
-const STABILITY_BADGE: { [k in Stability]: string } = {
-  stable: "✅ STABLE",
-  beta: "🧪 BETA",
-  alpha: "⚠️ ALPHA",
-  deprecated: "⛔ DEPRECATED",
-};
-
-const STABILITY_NOTE: { [k in Stability]: string } = {
-  stable: "Supported — the current recommended shape.",
-  beta: "Feature-complete but still subject to change before it is marked stable.",
-  alpha:
-    "Pre-release — this shape is **not final** and may change or be withdrawn. Do not treat it as stable.",
-  deprecated:
-    "On its way out — retained for compatibility and scheduled for removal at a future major version.",
-};
 
 /**
  * A single concrete, versioned shape behind a version dispatcher (see
@@ -79,6 +62,13 @@ export default class VersionedSubschemaNode extends SchemaNode {
   versionLabel = (): string =>
     versionLabelOf(this.basename()) ?? this.basename();
 
+  /** The label for this shape's collapsible `<summary>` on the parent
+   *  dispatcher's page — the version plus its stability badge
+   *  (e.g. `v1 — ✅ STABLE`), so a reader can tell which shape is current
+   *  without expanding the section. */
+  summaryLabel = (): string =>
+    `${this.versionLabel()} — ${STABILITY_BADGE[this.stability()]}`;
+
   writesOwnDoc = (): boolean => false;
 
   // A property should reference the dispatcher's public `$id`, not a version
@@ -93,6 +83,27 @@ export default class VersionedSubschemaNode extends SchemaNode {
   markdownOutput = () =>
     this.markdownVersionSection(this.outputFileAbsolutePath());
 
+  /**
+   * The body of this version shape as folded into the parent dispatcher's page:
+   * its own `$id`, a stability note, description, the partition-appropriate body
+   * (properties table / enum values / …), and a source link — everything EXCEPT
+   * a heading. The dispatcher wraps this in a content tab (whose label already
+   * carries the version + stability), so no `####` heading is needed here.
+   * All relative links resolve from `parentOutputPath` (the parent page).
+   */
+  markdownVersionContent = (parentOutputPath: string): string => {
+    const stability = this.stability();
+    return `\`${this.id()}\`
+
+> **Stability:** \`${stability}\` — ${STABILITY_NOTE[stability]}
+
+**Description:** _${this.description()}_
+
+${this.inner.markdownVersionBody(parentOutputPath)}
+
+**Source Code:** ${this.mdLinkToSourceSchemaFrom(parentOutputPath)}`;
+  };
+
   /** Link to this shape's source `.schema.json`, computed relative to the
    *  parent dispatcher's page (not this shape's own would-be page, which is
    *  never written). */
@@ -105,22 +116,13 @@ export default class VersionedSubschemaNode extends SchemaNode {
   };
 
   /**
-   * Render this version shape as a `####` section for embedding in the parent
-   * dispatcher's page. All relative links (property type links, source link)
-   * are computed from `parentOutputPath` so they resolve from the parent page.
+   * Render this version shape as a `####` section (heading + content). The
+   * parent dispatcher now folds versions in as content tabs (see
+   * `markdownVersionContent`); this heading form is retained for a standalone
+   * render of the shape via `markdownOutput`.
    */
-  markdownVersionSection = (parentOutputPath: string): string => {
-    const stability = this.stability();
-    return `#### ${this.title()} — ${STABILITY_BADGE[stability]}
+  markdownVersionSection = (parentOutputPath: string): string =>
+    `#### ${this.title()} — ${STABILITY_BADGE[this.stability()]}
 
-\`${this.id()}\`
-
-> **Stability:** \`${stability}\` — ${STABILITY_NOTE[stability]}
-
-**Description:** _${this.description()}_
-
-${this.inner.markdownVersionBody(parentOutputPath)}
-
-**Source Code:** ${this.mdLinkToSourceSchemaFrom(parentOutputPath)}`;
-  };
+${this.markdownVersionContent(parentOutputPath)}`;
 }

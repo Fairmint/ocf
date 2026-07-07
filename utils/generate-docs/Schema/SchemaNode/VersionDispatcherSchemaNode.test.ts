@@ -142,9 +142,11 @@ describe("VersionDispatcherSchemaNode (version dispatcher)", () => {
       expect(md).toContain("version dispatcher");
       expect(md).toContain("**Data Type:** `Versioned OCF Schema`");
 
-      // Both versions rendered as their own sections with stability badges.
-      expect(md).toContain("#### Object - Equity Compensation Issuance (v1)");
-      expect(md).toContain("#### Object - Equity Compensation Issuance (v2)");
+      // Both versions rendered as collapsible <details> labelled version +
+      // stability, with the stable shape expanded (`open`) first.
+      expect(md).toContain('<details open markdown="1">');
+      expect(md).toContain("<summary>v1 — ");
+      expect(md).toContain("<summary>v2 — ");
       expect(md).toContain("STABLE");
       expect(md).toContain("ALPHA");
       expect(md).toContain("**Stability:** `stable`");
@@ -153,17 +155,19 @@ describe("VersionDispatcherSchemaNode (version dispatcher)", () => {
       expect(md).toContain("not final");
     });
 
-    it("orders sections stable-first regardless of anyOf declaration order", () => {
+    it("orders sections stable-first (open) regardless of anyOf declaration order", () => {
       const md = buildSchema()
         .findSchemaNodeById(DISPATCHER_FIXTURE.$id)
         .markdownOutput();
 
-      // "(v1)" / "(v2)" appear only in their section headers.
-      const stableIdx = md.indexOf("(v1)");
-      const alphaIdx = md.indexOf("(v2)");
+      const stableIdx = md.indexOf("<summary>v1");
+      const alphaIdx = md.indexOf("<summary>v2");
       expect(stableIdx).toBeGreaterThan(-1);
       expect(alphaIdx).toBeGreaterThan(-1);
       expect(stableIdx).toBeLessThan(alphaIdx);
+      // Only the leading (stable) section is expanded by default.
+      expect(md.indexOf("<details open")).toBeLessThan(alphaIdx);
+      expect(md.indexOf('<details markdown="1">')).toBeGreaterThan(stableIdx);
     });
 
     it("renders each version's properties (composed from its allOf base)", () => {
