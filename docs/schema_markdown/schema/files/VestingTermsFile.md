@@ -2,7 +2,7 @@
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/files/VestingTermsFile.schema.json`
 
-**Description:** _JSON containing file type identifier and list of vesting terms_
+**Description:** _JSON file schema defining a list of vesting term objects. Each object includes a vesting schedule name, allocation type, and a graph of vesting conditions with fixed or proportional tranches triggered by dates, events, or relative timing. Enables detailed modeling of vesting logic, including cliffs, linear schedules, and custom triggers._
 
 **Data Type:** `OCF_VESTING_TERMS_FILE`
 
@@ -19,4 +19,4 @@
 
 **Source Code:** [schema/files/VestingTermsFile](../../../../schema/files/VestingTermsFile.schema.json)
 
-Copyright © 2025 Open Cap Table Coalition.
+Copyright © 2026 Open Cap Table Coalition.

@@ -2,7 +2,7 @@
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/VestingStart.schema.json`
 
-**Description:** _Object describing the transaction of vesting schedule start / commencement associated with a security_
+**Description:** _Object schema describing the start of a vesting schedule for a security. It records the triggering of a VESTING_START_DATE condition within the associated vesting terms._
 
 **Data Type:** `OCF Object - TX_VESTING_START`
 
@@ -60,4 +60,4 @@
 ]
 ```
 
-Copyright © 2025 Open Cap Table Coalition.
+Copyright © 2026 Open Cap Table Coalition.

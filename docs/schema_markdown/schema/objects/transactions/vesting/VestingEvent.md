@@ -2,7 +2,7 @@
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/vesting/VestingEvent.schema.json`
 
-**Description:** _Object describing the transaction of an non-schedule-driven vesting event associated with a security_
+**Description:** _Object schema describing a non-schedule-driven vesting event for a security, triggered by a VESTING_EVENT condition in the associated vesting terms._
 
 **Data Type:** `OCF Object - TX_VESTING_EVENT`
 
@@ -49,4 +49,4 @@
 ]
 ```
 
-Copyright © 2025 Open Cap Table Coalition.
+Copyright © 2026 Open Cap Table Coalition.

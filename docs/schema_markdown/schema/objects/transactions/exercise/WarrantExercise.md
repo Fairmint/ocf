@@ -2,7 +2,7 @@
 
 `https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/objects/transactions/exercise/WarrantExercise.schema.json`
 
-**Description:** _Object describing a warrant exercise transaction_
+**Description:** _Object schema describing a warrant exercise transaction. Captures the trigger that caused the exercise, the resulting security IDs, and optional consideration text. Used to convert warrant rights into actual equity holdings._
 
 **Data Type:** `OCF Object - TX_WARRANT_EXERCISE`
 
@@ -62,4 +62,4 @@
 ]
 ```
 
-Copyright © 2025 Open Cap Table Coalition.
+Copyright © 2026 Open Cap Table Coalition.
