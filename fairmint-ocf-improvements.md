@@ -23,6 +23,7 @@ connected-record rail, and the OCP whitepaper.
 | [OCF-IMP-005](#ocf-imp-005-legend-restriction-change)                       | B   | Open   | No legend / restriction change without cancel-reissue                  |
 | [OCF-IMP-006](#ocf-imp-006-nominee-omnibus-capacity)                        | C   | Open   | No nominee / omnibus capacity on `STAKEHOLDER`                         |
 | [OCF-IMP-007](#ocf-imp-007-structured-transfer-reason)                      | A   | Open   | No structured transfer reason or capacity                              |
+| [OCF-IMP-008](#ocf-imp-008-external-instrument-identifier)                  | C   | Open   | No external identifier for private-market instruments                  |
 
 ---
 
@@ -227,3 +228,23 @@ Transfers have no reason enum. Gift, estate, escheat, DRS-to-nominee, and a pric
 **Direction:** Optional reason enum + text on the transfer primitive. Do not invent a `TX_*` per
 reason. Full write-up:
 [dev-docs OCF-IMP-007](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-007--no-structured-transfer-reason-or-capacity).
+
+---
+
+## OCF-IMP-008: External instrument identifier
+
+**Affects:** TAD routing; UCC / lender references; cross-TA settlement messages; venues naming a
+class.
+
+Private-market instruments commonly lack an assigned identifier (CGS/Aumni began assigning licensed
+"Private CUSIPs" to venture-backed securities in 2025). Every platform mints a local key;
+counterparties cannot name an instrument without a private join key, and OCF has no external
+identifier field to carry one.
+
+**Direction:** Optional external-identifier block on instrument-level objects — simple metadata on
+`STOCK_CLASS` / `STOCK_PLAN`; warrants and convertibles (issuance transactions, no first-class
+object) need a form-reference sub-design, still open. The identifier scheme and registry are
+Fairmint infrastructure alongside the TAD network, not a coalition deliverable:
+`tad:<operator-badge>:<local-id+check>` with directory-allocated badges, minimal issuer anchors,
+free public dumps, and an onchain checkpoint. Full write-up:
+[dev-docs OCF-IMP-008](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-008--no-external-identifier-on-instruments-classes-and-plans).
