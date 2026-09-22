@@ -264,6 +264,9 @@ today lands as a plain `TX_STOCK_ISSUANCE` with no reason marking.
 record date, payment date, type) is OCF-core-worthy — the legal fact entitlements compute against,
 same standing as legends and reservations. Entitlement computation is a register query; the payment
 run / cash leg (1099-DIV, escheatment) is TA operational books, not OCF. Stock dividends / DRIP get
-reason marking on `TX_STOCK_ISSUANCE` (IMP-007 pattern). Open fork: declaration in core vs. governed
-TA profile — recorded open. Full write-up:
+reason marking on `TX_STOCK_ISSUANCE`: extend the existing `issuance_type` enum
+([`StockIssuanceType`](https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/blob/main/schema/enums/StockIssuanceType.schema.json)
+— `RSA`, `FOUNDERS_STOCK`) with `STOCK_DIVIDEND` / `DRIP` values rather than adding a parallel
+`reason` field. Open fork: declaration in core vs. governed TA profile — recorded open. Full
+write-up:
 [dev-docs OCF-IMP-009](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-009--no-dividend-declaration-stock-dividends-unmarked).
