@@ -24,6 +24,7 @@ connected-record rail, and the OCP whitepaper.
 | [OCF-IMP-006](#ocf-imp-006-nominee-omnibus-capacity)                        | C   | Open   | No nominee / omnibus capacity on `STAKEHOLDER`                         |
 | [OCF-IMP-007](#ocf-imp-007-structured-transfer-reason)                      | A   | Open   | No structured transfer reason or capacity                              |
 | [OCF-IMP-008](#ocf-imp-008-external-instrument-identifier)                  | C   | Open   | No external identifier for private-market instruments                  |
+| [OCF-IMP-009](#ocf-imp-009-dividend-declaration)                            | B   | Open   | No dividend declaration; stock dividends land as plain issuances       |
 
 ---
 
@@ -248,3 +249,21 @@ Fairmint infrastructure alongside the TAD network, not a coalition deliverable:
 `tad:<operator-badge>:<local-id+check>` with directory-allocated badges, minimal issuer anchors,
 free public dumps, and an onchain checkpoint. Full write-up:
 [dev-docs OCF-IMP-008](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-008--no-external-identifier-on-instruments-classes-and-plans).
+
+---
+
+## OCF-IMP-009: Dividend declaration
+
+**Affects:** Patomak TA / public-company track; 1099-DIV reporting; stock dividends; record dates.
+
+No dividend concept exists in OCF (verified: zero schema hits upstream and in this fork; no
+record-date primitive; only `InterestPayoutType` for convertible-note interest). A stock dividend
+today lands as a plain `TX_STOCK_ISSUANCE` with no reason marking.
+
+**Direction:** Split the family. A dated **declaration** object/event (class, per-share amount,
+record date, payment date, type) is OCF-core-worthy — the legal fact entitlements compute against,
+same standing as legends and reservations. Entitlement computation is a register query; the payment
+run / cash leg (1099-DIV, escheatment) is TA operational books, not OCF. Stock dividends / DRIP get
+reason marking on `TX_STOCK_ISSUANCE` (IMP-007 pattern). Open fork: declaration in core vs. governed
+TA profile — recorded open. Full write-up:
+[dev-docs OCF-IMP-009](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-009--no-dividend-declaration-stock-dividends-unmarked).
