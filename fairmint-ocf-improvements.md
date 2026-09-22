@@ -94,19 +94,19 @@ reservation that lives only on the projection is then a second ledger.
 
 The hold must be an OCF (or OCF-compatible) transaction family so:
 
-- reserved quantity is reconstructible from the log;
-- two venues cannot lock the same free quantity;
-- a published view on another chain cannot invent a reserve the home register did not accept.
+-   reserved quantity is reconstructible from the log;
+-   two venues cannot lock the same free quantity;
+-   a published view on another chain cannot invent a reserve the home register did not accept.
 
 ### What it is not
 
-- Not a transfer, cancellation, or repurchase. Legal owner does not change.
-- Not a legend. Legends are legal restrictions. This is a temporary operational hold
-  (stop-transfer).
-- Not a lot split (cancel and reissue a "reserved" `security_id`). Ownership did not change.
-- Not `transaction.status = pending` and not a Subsidiary File row.
-- Not a cross-chain lock. One writing transfer agent, one home register. Foreign chains may publish
-  a view or mint scrip only against a slice already reserved at home.
+-   Not a transfer, cancellation, or repurchase. Legal owner does not change.
+-   Not a legend. Legends are legal restrictions. This is a temporary operational hold
+    (stop-transfer).
+-   Not a lot split (cancel and reissue a "reserved" `security_id`). Ownership did not change.
+-   Not `transaction.status = pending` and not a Subsidiary File row.
+-   Not a cross-chain lock. One writing transfer agent, one home register. Foreign chains may
+    publish a view or mint scrip only against a slice already reserved at home.
 
 ### Proposed transaction family
 
@@ -131,31 +131,32 @@ position's outstanding quantity.
 
 **Reservation**
 
-- `id` (this is `reservation_id` for later objects)
-- `date`
-- `stakeholder_id`
-- `stock_class_id`
-- restriction bucket (legend / transfer-restriction set that makes shares non-fungible for the move)
-- `quantity`
-- `security_ids` (optional; chosen by the transfer agent, not by the market partner)
-- `transaction_id` or other deal correlation
-- `purpose` (register settlement, venue slice, scrip mint, issuer program)
-- `expires_at` (optional)
-- `comments`
+-   `id` (this is `reservation_id` for later objects)
+-   `date`
+-   `stakeholder_id`
+-   `stock_class_id`
+-   restriction bucket (legend / transfer-restriction set that makes shares non-fungible for the
+    move)
+-   `quantity`
+-   `security_ids` (optional; chosen by the transfer agent, not by the market partner)
+-   `transaction_id` or other deal correlation
+-   `purpose` (register settlement, venue slice, scrip mint, issuer program)
+-   `expires_at` (optional)
+-   `comments`
 
 **Release**
 
-- `id`
-- `date`
-- `reservation_id`
-- `quantity` (full or partial)
-- `reason` (`CANCELLED`, `EXPIRED`, `SUPERSEDED`, `ERROR`)
-- `comments`
+-   `id`
+-   `date`
+-   `reservation_id`
+-   `quantity` (full or partial)
+-   `reason` (`CANCELLED`, `EXPIRED`, `SUPERSEDED`, `ERROR`)
+-   `comments`
 
 **Consume**
 
-- Existing transfer / issuance / cancellation objects gain an optional `reservation_id` (or list).
-  Quantity consumed cannot exceed remaining reserved quantity on that reservation.
+-   Existing transfer / issuance / cancellation objects gain an optional `reservation_id` (or list).
+    Quantity consumed cannot exceed remaining reserved quantity on that reservation.
 
 Warrants, convertibles, and equity compensation may need the same family later (`TX_*_RESERVATION`).
 Start with stock.
@@ -235,12 +236,14 @@ reason. Full write-up:
 **Affects:** TAD routing; UCC / lender references; cross-TA settlement messages; venues naming a
 class.
 
-No external identifier exists for private-market instruments (share classes, plans, warrant /
-convertible forms). Every platform mints a local key; counterparties cannot name an instrument
-without a private join key. No CUSIP analog covers private shares.
+Private-market instruments commonly lack an assigned identifier (CGS/Aumni began assigning licensed
+"Private CUSIPs" to venture-backed securities in 2025). Every platform mints a local key;
+counterparties cannot name an instrument without a private join key, and OCF has no external
+identifier field to carry one.
 
-**Direction:** Optional external-identifier block on `STOCK_CLASS` / `STOCK_PLAN` / warrant and
-convertible objects (object metadata; not constitutive). The identifier scheme and registry are
+**Direction:** Optional external-identifier block on instrument-level objects — simple metadata on
+`STOCK_CLASS` / `STOCK_PLAN`; warrants and convertibles (issuance transactions, no first-class
+object) need a form-reference sub-design, still open. The identifier scheme and registry are
 Fairmint infrastructure alongside the TAD network, not a coalition deliverable:
 `tad:<operator-badge>:<local-id+check>` with directory-allocated badges, minimal issuer anchors,
 free public dumps, and an onchain checkpoint. Full write-up:
