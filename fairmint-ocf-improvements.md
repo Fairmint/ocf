@@ -284,16 +284,16 @@ one `legal_name`. `contact_info` and `primary_contact` are both optional, and `t
 an array, but nothing ties a tax ID, email, or address to a named co-owner, and nothing records the
 tenancy or whether both must sign.
 
-**v1 workaround:** One stakeholder whose `legal_name` is the joint name (for example "Ada Example and
-Bev Example"). The issuance points at that single `stakeholder_id`. `stakeholder_type` is still
-required. `INDIVIDUAL` means one human, so using it for a pair is a lossy convention that validates,
-not an OCF representation of joint ownership. One position, one investment amount.
+**v1 workaround:** One stakeholder whose `legal_name` is the joint name (for example "Ada Example
+and Bev Example"). The issuance points at that single `stakeholder_id`. `stakeholder_type` is still
+required. `INDIVIDUAL` is described as "individual (human)", so using it for a pair is a lossy
+convention that validates, not an OCF representation of joint ownership. One position, one
+investment amount.
 
 **Direction:** Optional joint-ownership block on that one `STAKEHOLDER`: tenancy, constituent
 persons (with an optional share when the tenancy is unequal), and whether both or either may
 instruct. `stakeholder_type` stays `INDIVIDUAL` or `INSTITUTION` for the constituents. Broaden the
-`INDIVIDUAL` description so it no longer means exactly one human; the block carries the count. Do
-not add a list of `stakeholder_id`s on the
-issuance. Distinct from [OCF-IMP-006](#ocf-imp-006-nominee-omnibus-capacity) (nominee capacity).
-Full write-up:
+`INDIVIDUAL` description ("individual (human)") so a singular reading is no longer implied; the
+block carries the count. Do not add a list of `stakeholder_id`s on the issuance. Distinct from
+[OCF-IMP-006](#ocf-imp-006-nominee-omnibus-capacity) (nominee capacity). Full write-up:
 [dev-docs OCF-IMP-010](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-010--no-structured-joint-ownership-on-a-stakeholder).
