@@ -280,12 +280,13 @@ write-up:
 persons as one purchaser; who may instruct the company.
 
 Issuance `stakeholder_id` is one string: the stakeholder that holds legal title. `STAKEHOLDER` has
-one `legal_name` and one contact. `tax_ids` is already an array, but nothing ties a tax ID, email,
-or address to a named co-owner, and nothing records the tenancy or whether both must sign.
+one `legal_name`. `contact_info` and `primary_contact` are both optional, and `tax_ids` is already
+an array, but nothing ties a tax ID, email, or address to a named co-owner, and nothing records the
+tenancy or whether both must sign.
 
-**v1 workaround:** One stakeholder whose `legal_name` is the joint name (for example "Krista E. Koch
-and Andrew W. Zschach"). The issuance points at that single `stakeholder_id`. One position, one
-investment amount.
+**v1 workaround:** One stakeholder with `stakeholder_type` `INDIVIDUAL` when both purchasers are
+natural persons, and `legal_name` set to the joint name (for example "Krista E. Koch and Andrew W.
+Zschach"). The issuance points at that single `stakeholder_id`. One position, one investment amount.
 
 **Direction:** Optional joint-ownership block on that one `STAKEHOLDER`: tenancy, constituent
 persons, and whether both or either may instruct. Do not add a list of `stakeholder_id`s on the
