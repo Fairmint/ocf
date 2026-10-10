@@ -290,7 +290,9 @@ still required. `INDIVIDUAL` means one human, so using it for a pair is a lossy 
 validates, not an OCF representation of joint ownership. One position, one investment amount.
 
 **Direction:** Optional joint-ownership block on that one `STAKEHOLDER`: tenancy, constituent
-persons, and whether both or either may instruct. Do not add a list of `stakeholder_id`s on the
+persons, and whether both or either may instruct. `stakeholder_type` stays `INDIVIDUAL` or
+`INSTITUTION` for the constituents. Broaden the `INDIVIDUAL` description so it no longer means
+exactly one human; the block carries the count. Do not add a list of `stakeholder_id`s on the
 issuance. Distinct from [OCF-IMP-006](#ocf-imp-006-nominee-omnibus-capacity) (nominee capacity).
 Full write-up:
 [dev-docs OCF-IMP-010](https://github.com/Fairmint/dev-docs/blob/main/docs/cap-table/ocf-schema-gaps.md#ocf-imp-010--no-structured-joint-ownership-on-a-stakeholder).
