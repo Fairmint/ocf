@@ -68,10 +68,13 @@ profile may annotate such an event. It must not be the only record of it.
 -   Vendor extensions: `com.<vendor>.<name>` (e.g., `com.fairmint.spv-interests`,
     `com.carta.dividend-details`)
 
-The `ocf.*` namespace is reserved. The registry rejects any profile that begins with `com.` or that
-claims the `ocf.` prefix without ratification. Vendor extensions must not use the `ocf.` prefix
-under any circumstances; a validator running in standard mode treats a namespace violation as an
-error (see §7).
+The `ocf.*` namespace is reserved for coalition profiles. An assigned OCIP reserves its `ocf.*` id
+from Draft onward, so a registry entry may use that id while its status is `draft` or `review`.
+Acceptance is what makes the id a conformance target, not what mints the name. The registry rejects
+a coalition profile whose id does not begin with `ocf.`, and it rejects a vendor extension whose id
+does not begin with `com.`. A vendor entry with status `vendor` and an id such as
+`com.example.dividend-details` is valid. A validator running in standard mode treats a namespace
+violation as an error (see §7).
 
 Versioning follows semantic versioning: `MAJOR.MINOR.PATCH`. A profile version is independent of the
 Core version, but each profile declares a `requires` field specifying the minimum Core version it
@@ -130,10 +133,13 @@ needs holder identity would carry:
 ]
 ```
 
-The validator loads each declared profile, looks up that exact `id` and `version` in the registry,
-and checks that the manifest declares a version satisfying every range. It builds a directed graph
-of profile ids and rejects a cycle. Dependencies are frozen with the registry entry for that
-version.
+The validator resolves each manifest declaration by looking up the registry row with that exact `id`
+and that exact concrete `version` (for example `1.0.0`). It then reads that row's
+`requires_profiles`. There, `version` is a semver range, not a registry key. For each dependency the
+validator finds a manifest declaration with the same `id` whose concrete version satisfies the
+range, and confirms that concrete version has its own registry row. A range such as `>=1.0.0 <2.0.0`
+is never used as a lookup key. The validator builds a directed graph of profile ids and rejects a
+cycle. Dependencies are frozen with the registry entry for that version.
 
 Old profile versions are never removed from the registry. A profile that has been superseded keeps
 its entry with `status: "superseded"` and a pointer to its replacement. This is the IETF property:
@@ -148,12 +154,13 @@ is fully conformant.
 This extends the existing manifest in `schema/files/OCFManifestFile.schema.json`. That schema uses
 categorized `*_files` arrays whose entries are `{ "filepath", "md5" }`
 (`schema/types/File.schema.json`) and sets `additionalProperties: false`. This proposal does not
-replace that shape. It adds three optional properties:
+replace that shape. It adds four optional properties:
 
 -   `profiles` — coalition profiles this package uses
 -   `vendor_extensions` — vendor extensions this package uses
--   `profile_files` — profile data files, using the same `{ "filepath", "md5" }` entry as every
-    other file array
+-   `profile_files` — coalition profile data files, using the same `{ "filepath", "md5" }` entry as
+    every other file array
+-   `vendor_extension_files` — vendor extension data files, using that same entry
 
 Core files stay in their existing arrays (`stakeholders_files`, `transactions_files`, and the rest).
 Profile files are not mixed into those arrays.
@@ -182,6 +189,12 @@ Profile files are not mixed into those arrays.
             "filepath": "profiles/ocf.acceptance-events/acceptances.ocf.json",
             "md5": "d41d8cd98f00b204e9800998ecf8427e"
         }
+    ],
+    "vendor_extension_files": [
+        {
+            "filepath": "vendor/com.fairmint.spv-interests/interests.ocf.json",
+            "md5": "d41d8cd98f00b204e9800998ecf8427e"
+        }
     ]
 }
 ```
@@ -191,9 +204,13 @@ includes them.
 
 -   `profiles` is the list of coalition profiles a consumer should expect. An empty array, or the
     field's absence, means the document is pure Core.
--   `vendor_extensions` lists vendor-specific extensions. A consumer that does not recognize one
-    skips its files.
--   `profile_files` lists only profile data. Each file lives under `profiles/<profile-id>/`.
+-   `vendor_extensions` lists vendor-specific extensions by id and version.
+-   `profile_files` lists only coalition profile data. Each file lives under
+    `profiles/<profile-id>/`.
+-   `vendor_extension_files` lists vendor payloads, using the same `{ "filepath", "md5" }` entry.
+    Each file lives under `vendor/<extension-id>/`. A consumer that does not recognize an extension
+    skips the files under that extension's directory. Inline extension data is not allowed, so this
+    array is the only place those files are declared.
 -   Adopting the new properties requires a schema revision that adds them as optional and relaxes
     nothing else. Until that revision ships, a validator enforcing the current schema rejects a
     manifest that includes them. A manifest that omits them remains valid against the current
@@ -219,6 +236,9 @@ my-cap-table.ocf/
         └── acceptances.json      # extension transactions referencing security_id
 ```
 
+Vendor extension data lives under `vendor/<extension-id>/` and is listed in
+`vendor_extension_files`. It is not listed in `profile_files`.
+
 **Cross-reference rule:** extension records reference Core records by their Core ID
 (`stakeholder_id`, `security_id`, `transaction_id`). Core records never reference extensions.
 
@@ -243,13 +263,16 @@ Not allowed as a profile-only event:
 Those belong in Core. If Core cannot express one of them, that is a Core schema change, not a
 profile. A profile may attach metadata to the Core event by id. It may not be the event.
 
-The invariant, which validators must be able to test:
+The invariant is a review rule on the profile. A generic validator does not infer economic effect
+from arbitrary JSON:
 
 > **A Core-only consumer parsing a document that contains extensions produces the identical Core cap
 > table as if the extensions were absent.**
 
 File separation makes Core files byte-identical. The economic-effect rule makes the computed cap
-table identical.
+table identical. The TWG does not accept a profile whose records can be the only statement of a
+quantity or ownership change. A profile OCIP that needs a machine check states that check
+explicitly. The validator runs stated checks. It does not invent them.
 
 ### 6. Conformance: producer and consumer
 
@@ -267,37 +290,42 @@ must:
 **Consumer conformance.** A system claiming _consumer_ conformance to `ocf.holder-identity` 1.0.0
 must:
 
--   Correctly parse and interpret all fields defined by the profile's schema
--   Handle all required fields without error
--   Not silently drop or misinterpret required extension fields
+-   Parse every field the profile schema defines
+-   Accept a document that contains every producer-required field, without error
+-   Not silently drop or misread a field it claims to understand
 
 A system may be a conformant Core producer/consumer without claiming any profile. A system may be a
 consumer of a profile without being a producer of it (e.g., a law-firm diligence tool reads
 `ocf.document-references` but does not produce it).
 
-A profile's OCIP specifies which fields are required for producer conformance vs. recommended for
-consumer conformance. This split exists because producing a document is a stronger claim than
-reading one: a producer asserts "this data is correct and complete for this profile," while a
-consumer asserts "I will not break if this data is present."
+A profile's OCIP may mark a field required for producers and optional for a consumer to act on. That
+does not relax parsing. A consumer that does not implement the business meaning of such a field must
+still preserve it and must not invent a different meaning. The producer claim is "this data is
+complete for this profile." The consumer claim is "I accept this profile's documents, and I do not
+misread the fields I use."
 
 ### 7. Validation levels
 
 The OCF validator operates in three modes:
 
-| Condition                                                                            | Lenient | **Standard** | Strict  |
-| ------------------------------------------------------------------------------------ | ------- | ------------ | ------- |
-| Unknown profile in manifest (not in registry)                                        | Warning | **Warning**  | Error   |
-| Known profile, missing required field                                                | Error   | **Error**    | Error   |
-| Known profile, schema-invalid extension record                                       | Error   | **Error**    | Error   |
-| Namespace violation (`ocf.*` used by vendor)                                         | Warning | **Error**    | Error   |
-| Unknown vendor extension in manifest                                                 | Ignored | **Ignored**  | Warning |
-| Core record references extension (dependency violation)                              | Error   | **Error**    | Error   |
-| Profile record is the only representation of a quantity- or ownership-changing event | Error   | **Error**    | Error   |
+| Condition                                                         | Lenient | **Standard** | Strict  |
+| ----------------------------------------------------------------- | ------- | ------------ | ------- |
+| Unknown profile in manifest (not in registry)                     | Warning | **Warning**  | Error   |
+| Known profile, missing required field                             | Error   | **Error**    | Error   |
+| Known profile, schema-invalid extension record                    | Error   | **Error**    | Error   |
+| Namespace violation (`ocf.*` used by vendor)                      | Warning | **Error**    | Error   |
+| Unknown vendor extension in manifest                              | Ignored | **Ignored**  | Warning |
+| Core record references extension (dependency violation)           | Error   | **Error**    | Error   |
+| Record fails an economic-effect check defined by its profile OCIP | Error   | **Error**    | Error   |
+
+The economic-effect rule in §5 is a review invariant on the profile OCIP. A generic validator does
+not infer economic effect from arbitrary JSON. When a profile's OCIP defines an explicit semantic
+check, the validator runs that check and reports an error in every mode.
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet
-should still load). Strict mode is for regulatory or audit contexts where any undeclared extension
-is a rejection.
+should still load). Strict mode is for regulatory or audit contexts. An unknown coalition profile is
+an error. An unknown vendor extension is a warning, as the table says. It is not a rejection.
 
 ### 8. Profile lifecycle
 
@@ -336,17 +364,19 @@ Hard rules, enforced by the validator:
    `security_id`, or `transaction_id` from Core. Core never references an extension.
 2. **Extensions are additive.** An extension may not redefine, override, subtract, or rename a Core
    field or type. It may only add new records that reference Core records.
-3. **Profiles do not change the computed cap table.** See the economic-effect rule in §5. A profile
-   record that is the only representation of a quantity- or ownership-changing event is a validation
-   error in every mode.
+3. **Profiles do not change the computed cap table.** See the economic-effect rule in §5. That rule
+   is enforced when the profile is reviewed. A generic document validator enforces it only when the
+   profile OCIP defines an explicit semantic check. A record that fails such a check is an error in
+   every mode.
 4. **Extensions may depend on other extensions.** Dependencies are declared on the registry entry as
    `requires_profiles` (see §3): an array of `{ "id", "version" }`, where `version` is a semver
    range. The validator checks that the manifest declares a satisfying version of each dependency.
 5. **No circular dependencies.** The dependency graph of profile ids is a DAG. The validator rejects
    a cycle.
 6. **Core version floor.** Each profile declares `requires_core` as a semver range on its registry
-   entry. If the document's `ocf_version` does not satisfy the range, the validator reports an
-   error.
+   entry. The validator compares that range to the numeric `MAJOR.MINOR.PATCH` of the document's
+   `ocf_version` and ignores prerelease and build metadata. `1.2.1-alpha+main` satisfies `>=1.0.0`.
+   If the numeric version does not satisfy the range, the validator reports an error.
 
 ### 11. Prerequisite: stable identifiers in Core
 
@@ -389,8 +419,8 @@ distinction.
 
 ### Why standard mode as default
 
-Strict mode (any undeclared extension is an error) would make every new profile a breaking change
-for existing validators — the first time anyone ships a document with `ocf.holder-identity`, every
+Treating an unknown coalition profile as an error would make every new profile a breaking change for
+existing validators — the first time anyone ships a document with `ocf.holder-identity`, every
 validator that doesn't know it yet would reject the document. Standard mode (unknown profiles are
 warnings, known profiles are strictly validated) is forward-compatible: a document from 2028 with
 profiles that don't exist yet still loads, and the validator tells the consumer "here's a profile I
@@ -409,11 +439,11 @@ don't recognize — look it up in the registry."
 
 ## Backwards compatibility
 
-A pure-Core OCF document that omits `profiles`, `vendor_extensions`, and `profile_files` stays valid
-against the current manifest schema. Documents that include those fields require the schema revision
-in §4, because `OCFManifestFile` currently sets `additionalProperties: false`. The revision adds the
-three properties as optional. It does not rename `filepath` or `md5`, and it does not replace the
-categorized `*_files` arrays.
+A pure-Core OCF document that omits `profiles`, `vendor_extensions`, `profile_files`, and
+`vendor_extension_files` stays valid against the current manifest schema. Documents that include
+those fields require the schema revision in §4, because `OCFManifestFile` currently sets
+`additionalProperties: false`. The revision adds the four properties as optional. It does not rename
+`filepath` or `md5`, and it does not replace the categorized `*_files` arrays.
 
 For the proposed OCF Core (the Carta proposal in `OCF-Composed-Schemas`): a gap is a profile
 candidate only when ignoring it leaves the computed cap table unchanged (holder identity,
@@ -488,7 +518,7 @@ Package files stay `{ "filepath", "md5" }`, as in §4.
     "profiles": [{ "id": "ocf.document-references", "version": "1.0.0" }],
     "profile_files": [
         {
-            "filepath": "profiles/ocf.document-references/documents.ocf.json",
+            "filepath": "profiles/ocf.document-references/documents.json",
             "md5": "d41d8cd98f00b204e9800998ecf8427e"
         }
     ]
@@ -514,8 +544,9 @@ documents evidence which securities.
    `ocf.document-references` as separate profiles) rather than one large transfer-agent profile, so
    that a law firm can adopt document references without also adopting tax-ID fields. A profile that
    would change holdings is out of scope (see §5).
-3. **Core version floor syntax.** This proposal uses semver ranges on `requires_core` but does not
-   define the Core versioning scheme. That belongs in the Core specification.
+3. **Core version numbering.** Comparison of `requires_core` is defined in §10: numeric
+   `MAJOR.MINOR.PATCH`, with prerelease and build metadata ignored. What a Core version number means
+   still belongs in the Core specification.
 
 ## References
 

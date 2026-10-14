@@ -119,8 +119,9 @@ replaced only by deprecation and supersession.
 
 -   **OCIP numbers** are sequential, assigned at PR time, never reused.
 -   **Profile IDs** use a dotted convention: `ocf.<name>` for coalition profiles (e.g.,
-    `ocf.holder-identity`, `ocf.transfer-lineage`), `com.<vendor>.<name>` for vendor extensions. The
-    `ocf.*` namespace is reserved and may only be used by accepted OCIPs.
+    `ocf.holder-identity`, `ocf.document-references`), `com.<vendor>.<name>` for vendor extensions.
+    An assigned OCIP reserves its `ocf.*` id from Draft onward. Acceptance is what makes that id a
+    conformance target. A vendor extension must not use the `ocf.` prefix.
 -   **Profile versions** follow semantic versioning (`MAJOR.MINOR.PATCH`), independent of the Core
     version.
 -   **Old versions are never removed from the registry.** A superseded version keeps its entry with
