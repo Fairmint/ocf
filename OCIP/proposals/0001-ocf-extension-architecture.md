@@ -321,21 +321,21 @@ fields I use."
 
 The OCF validator operates in three modes:
 
-| Condition                                                                   | Lenient | **Standard** | Strict  |
-| --------------------------------------------------------------------------- | ------- | ------------ | ------- |
-| Unknown coalition profile in manifest (not in registry)                     | Warning | **Warning**  | Error   |
-| Declared coalition profile, registry `status` not `accepted`                | Warning | **Warning**  | Error¹  |
-| Known profile, missing required field                                       | Error   | **Error**    | Error   |
-| Known profile, schema-invalid extension record                              | Error   | **Error**    | Error   |
-| Namespace violation (`ocf.*` on a vendor id, or `com.*` on a profile)       | Warning | **Error**    | Error   |
-| Unknown vendor extension in manifest (no namespace violation)               | Ignored | **Ignored**  | Warning |
-| Declared profile or vendor id with no files in the matching `*_files` array | Error   | **Error**    | Error   |
-| Profile or vendor file for an id not declared in the manifest               | Error   | **Error**    | Error   |
-| Missing `requires_profiles` dependency or unmet `requires_core` (§10)       | Error   | **Error**    | Error   |
-| Circular `requires_profiles` dependency                                     | Error   | **Error**    | Error   |
-| Extension record references a Core id not present in Core files             | Error   | **Error**    | Error   |
-| Core record references extension (dependency violation)                     | Error   | **Error**    | Error   |
-| Record fails an economic-effect check defined by its profile OCIP           | Error   | **Error**    | Error   |
+| Condition                                                                   | Lenient | **Standard** | Strict   |
+| --------------------------------------------------------------------------- | ------- | ------------ | -------- |
+| Unknown coalition profile in manifest (not in registry)                     | Warning | **Warning**  | Error    |
+| Declared coalition profile, registry `status` not `accepted`                | Warning | **Warning**  | Warning¹ |
+| Known profile, missing required field                                       | Error   | **Error**    | Error    |
+| Known profile, schema-invalid extension record                              | Error   | **Error**    | Error    |
+| Namespace violation (`ocf.*` on a vendor id, or `com.*` on a profile)       | Warning | **Error**    | Error    |
+| Unknown vendor extension in manifest (no namespace violation)               | Ignored | **Ignored**  | Warning  |
+| Declared profile or vendor id with no files in the matching `*_files` array | Error   | **Error**    | Error    |
+| Profile or vendor file for an id not declared in the manifest               | Error   | **Error**    | Error    |
+| Missing `requires_profiles` dependency or unmet `requires_core` (§10)       | Error   | **Error**    | Error    |
+| Circular `requires_profiles` dependency                                     | Error   | **Error**    | Error    |
+| Extension record references a Core id not present in Core files             | Error   | **Error**    | Error    |
+| Core record references extension (dependency violation)                     | Error   | **Error**    | Error    |
+| Record fails an economic-effect check defined by its profile OCIP           | Error   | **Error**    | Error    |
 
 ¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
 warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over
@@ -348,8 +348,9 @@ check, the validator runs that check and reports an error in every mode.
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet
 should still load). Strict mode is for regulatory or audit contexts. In strict mode, unknown
-coalition profiles and non-`accepted` coalition profiles (including `rejected`) are errors; unknown
-vendor extensions are warnings, as the table says.
+coalition profiles and registry rows with status `rejected` are errors; other declared profiles
+whose registry status is not `accepted` remain warnings (see table footnote¹); unknown vendor
+extensions are warnings, as the table says.
 
 ### 8. Profile lifecycle
 
