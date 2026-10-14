@@ -5,6 +5,7 @@ status: Accepted (template — not a normative proposal)
 author: Thibauld Favre (thibauld@fairmint.com)
 created: 2026-09-22
 type: Process
+area: process
 ---
 
 # OCIP-NNNN: <Title>
@@ -21,8 +22,8 @@ reference existing OCIPs and issues.
 
 ## Specification
 
-The normative content of the proposal. What changes, in enough detail that an implementer can
-build against it and a validator can check conformance.
+The normative content of the proposal. What changes, in enough detail that an implementer can build
+against it and a validator can check conformance.
 
 ## Rationale
 
@@ -77,30 +78,34 @@ requires: <OCIP number, if this proposal depends on another>
 
 ### Fields
 
-| Field | Required | Description |
-|---|---|---|
-| `ocip` | yes | Sequential number, never reused. `0000` is reserved for this template. |
-| `title` | yes | Human-readable title. |
-| `status` | yes | Lifecycle state (see below). |
-| `author` | yes | Proposer's name and email or GitHub handle. |
-| `created` | yes | Date of first draft (YYYY-MM-DD). |
-| `type` | yes | `Standards Track` (changes the spec), `Process` (changes how the spec is governed), `Meta` (registry/admin). |
-| `area` | yes | `core`, `profile`, `governance`, or `process`. |
-| `replaces` | no | If this proposal supersedes an earlier one, its number. |
-| `superseded_by` | no | If this proposal has been superseded, the replacing number. |
-| `requires` | no | If this proposal depends on another (e.g., a profile that requires stable identifiers), its number. |
+| Field           | Required | Description                                                                                                  |
+| --------------- | -------- | ------------------------------------------------------------------------------------------------------------ |
+| `ocip`          | yes      | Sequential number, never reused. `0000` is reserved for this template.                                       |
+| `title`         | yes      | Human-readable title.                                                                                        |
+| `status`        | yes      | Lifecycle state (see below).                                                                                 |
+| `author`        | yes      | Proposer's name and email or GitHub handle.                                                                  |
+| `created`       | yes      | Date of first draft (YYYY-MM-DD).                                                                            |
+| `type`          | yes      | `Standards Track` (changes the spec), `Process` (changes how the spec is governed), `Meta` (registry/admin). |
+| `area`          | yes      | `core`, `profile`, `governance`, or `process`.                                                               |
+| `replaces`      | no       | If this proposal supersedes an earlier one, its number.                                                      |
+| `superseded_by` | no       | If this proposal has been superseded, the replacing number.                                                  |
+| `requires`      | no       | If this proposal depends on another (e.g., a profile that requires stable identifiers), its number.          |
 
 ### Lifecycle
 
 ```
 Draft → Review (Last Call) → Accepted → Deprecated → Superseded
-                                      ↘ Rejected
+
+Draft or Review → Rejected
 ```
+
+`Rejected` is a review outcome. It is not reachable from `Accepted`. An accepted proposal is
+replaced only by deprecation and supersession.
 
 1. **Draft** — author's initial proposal. Open for comment. The registry entry (if applicable) has
    `status: "draft"`.
-2. **Review** — the author requests Last Call status. The TWG sets a review window (default: 4 weeks).
-   Comments are collected via GitHub issues on the proposal's pull request.
+2. **Review** — the author requests Last Call status. The TWG sets a review window (default: 4
+   weeks). Comments are collected via GitHub issues on the proposal's pull request.
 3. **Accepted** — the TWG ratifies the proposal. The registry entry (if applicable) is updated to
    `status: "accepted"`. The proposal is now normative.
 4. **Deprecated** — a newer version or a Core inclusion makes this version obsolete but still
@@ -112,11 +117,11 @@ Draft → Review (Last Call) → Accepted → Deprecated → Superseded
 
 ### Naming conventions
 
-- **OCIP numbers** are sequential, assigned at PR time, never reused.
-- **Profile IDs** use a dotted convention: `ocf.<name>` for coalition profiles (e.g.,
-  `ocf.holder-identity`, `ocf.transfer-lineage`), `com.<vendor>.<name>` for vendor extensions.
-  The `ocf.*` namespace is reserved and may only be used by accepted OCIPs.
-- **Profile versions** follow semantic versioning (`MAJOR.MINOR.PATCH`), independent of the Core
-  version.
-- **Old versions are never removed from the registry.** A superseded version keeps its entry with a
-  `superseded_by` pointer to its replacement.
+-   **OCIP numbers** are sequential, assigned at PR time, never reused.
+-   **Profile IDs** use a dotted convention: `ocf.<name>` for coalition profiles (e.g.,
+    `ocf.holder-identity`, `ocf.transfer-lineage`), `com.<vendor>.<name>` for vendor extensions. The
+    `ocf.*` namespace is reserved and may only be used by accepted OCIPs.
+-   **Profile versions** follow semantic versioning (`MAJOR.MINOR.PATCH`), independent of the Core
+    version.
+-   **Old versions are never removed from the registry.** A superseded version keeps its entry with
+    a `superseded_by` pointer to its replacement.
