@@ -41,9 +41,10 @@ doesn't have a specification, a conformance section, or a lifecycle.
 1. Copy [`proposals/0000-template.md`](proposals/0000-template.md) to
    `proposals/NNNN-short-title.md`.
 2. Fill in the front matter and body.
-3. Open a pull request. The TWG reviews it. On acceptance, the PR is merged and the status becomes
-   `Accepted`.
-4. The [`registry/`](registry/) directory tracks accepted profiles and their versions.
+3. Open a pull request. The TWG reviews it. Draft proposals may be merged for discussion; on
+   acceptance, the status becomes `Accepted`.
+4. The [`registry/`](registry/) directory tracks all registered profile and vendor entries and their
+   versions (every lifecycle status).
 
 ## Current proposals
 

@@ -1,7 +1,7 @@
 ---
 ocip: 0000
 title: OCIP Template
-status: Accepted (template — not a normative proposal)
+status: Accepted
 author: Thibauld Favre (thibauld@fairmint.com)
 created: 2026-09-22
 type: Process
@@ -9,6 +9,8 @@ area: process
 ---
 
 # OCIP-NNNN: <Title>
+
+OCIP-0000 is an **Accepted** process template; it is not a normative Standards Track change.
 
 ## Abstract
 

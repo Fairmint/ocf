@@ -30,7 +30,8 @@ extension, and interoperability ends at the Core boundary.
 This proposal defines the extension mechanism so that:
 
 -   Core stays minimal and stable (it does not grow indefinitely)
--   Everything OCF v1 carries that Core doesn't is preserved in a standardized home
+-   OCF v1 fields and facts that Core omits can live in named profiles without changing the computed
+    cap table (see §5)
 -   A consumer can determine what a document contains without parsing every record
 -   A producer can claim conformance to a specific profile (e.g., "this document conforms to
     `ocf.transfer-lineage` 1.0.0")
@@ -55,7 +56,7 @@ profile may annotate such an event. It must not be the only record of it.
 | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Core**             | The minimal set of OCF object types, transaction types, and fields that every conformant document must support. Defined and governed by the OCF specification proper.                                                                                                         |
 | **Profile**          | A named, versioned, coalition-governed package of additional records that annotate Core without changing the cap table a Core-only consumer computes. Ratified through the OCIP process. Examples: `ocf.holder-identity`, `ocf.acceptance-events`, `ocf.document-references`. |
-| **Vendor extension** | A reverse-DNS-namespaced set of fields/types produced by a single organization for its own use. Not coalition-governed. Must not collide with profile or Core namespaces.                                                                                                     |
+| **Vendor extension** | A vendor-namespaced set of fields/types produced by a single organization for its own use. Not coalition-governed. Must not collide with profile or Core namespaces.                                                                                                          |
 | **Registry**         | The authoritative list of all profiles and their versions, maintained in the OCIP repository. Machine-readable (JSON) and human-readable (this repo's documentation).                                                                                                         |
 | **Manifest**         | The top-level file in an OCF package that declares which profiles and vendor extensions the package uses, along with file checksums and schema version.                                                                                                                       |
 
@@ -77,13 +78,14 @@ does not begin with `com.`. A vendor entry with status `vendor` and an id such a
 violation as an error (see §7).
 
 Versioning follows semantic versioning: `MAJOR.MINOR.PATCH`. A profile version is independent of the
-Core version, but each profile declares a `requires` field specifying the minimum Core version it
-was authored against.
+Core version, but each profile declares `requires_core` (a semver range) for the minimum Core
+version it was authored against.
 
 ### 3. The registry
 
 The registry is a single JSON file in the OCIP repository (`registry/profiles.json`) plus rendered
-documentation. Its structure:
+documentation. Top-level `version` is the **registry format version** (not a profile or Core
+version). Its structure:
 
 ```json
 {
@@ -107,22 +109,27 @@ documentation. Its structure:
 }
 ```
 
-A profile entry in the registry contains:
+Each object in `profiles` has:
 
--   `id` — the dotted profile ID
--   `version` — semver
--   `status` — one of `draft`, `review`, `accepted`, `deprecated`, `superseded`, `vendor`. Coalition
-    profiles use the first five. A vendor extension that opts into the registry for discovery uses
-    `vendor`. That status is not an OCIP lifecycle state and is not a conformance target.
--   `schema` — path to the JSON Schema for this profile's types
--   `spec` — path to the OCIP that defines it. `NNNN` in the example is a placeholder. A number is
-    assigned when that OCIP is opened, and this example does not reserve one.
--   `requires_core` — semver range for the minimum Core version (see §10)
--   `requires_profiles` — array of `{ "id", "version" }` dependencies on other profiles. `version`
-    is a semver range. An empty array means no profile dependencies. The field lives on the registry
-    entry, not inside the profile data schema.
--   `owner` — `coalition` for ratified profiles; a vendor name for entries with `status: "vendor"`
--   `superseded_by` — if deprecated or superseded, the ID and version that replaces it, or `null`
+| Field               | Required | Description                                                                                                                 |
+| ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `id`                | yes      | Dotted profile or vendor extension ID.                                                                                      |
+| `version`           | yes      | Semver for this registry row.                                                                                               |
+| `status`            | yes      | See lifecycle below.                                                                                                        |
+| `schema`            | yes      | Path to this row's JSON Schema.                                                                                             |
+| `requires_core`     | yes      | Semver range on Core (see §10).                                                                                             |
+| `requires_profiles` | yes      | Array of `{ "id", "version" }` profile dependencies (`version` is a range); `[]` if none.                                   |
+| `owner`             | yes      | `coalition` or vendor name.                                                                                                 |
+| `title`             | no       | Short human title.                                                                                                          |
+| `description`       | no       | One-line summary.                                                                                                           |
+| `spec`              | no       | Path to the defining OCIP (`NNNN` in the example is a placeholder).                                                         |
+| `created`           | no       | Date the registry row was first added (`YYYY-MM-DD`).                                                                       |
+| `superseded_by`     | no       | `null`, or `{ "id", "version" }` of the replacement profile, or `{ "core": true, "version" }` when promoted into Core (§9). |
+
+`status` is one of `draft`, `review`, `accepted`, `deprecated`, `superseded`, `rejected`, `vendor`.
+Coalition profiles use the first six. A vendor extension that opts into the registry uses `vendor`
+(that status is not an OCIP lifecycle state and is not a conformance target). `rejected` is
+terminal: the OCIP was not adopted; the id remains reserved for citation.
 
 A profile that depends on another declares that dependency only here. Example: a later profile that
 needs holder identity would carry:
@@ -211,6 +218,11 @@ includes them.
     Each file lives under `vendor/<extension-id>/`. A consumer that does not recognize an extension
     skips the files under that extension's directory. Inline extension data is not allowed, so this
     array is the only place those files are declared.
+-   Each coalition profile id and each vendor extension id may appear at most once in its respective
+    manifest list (one concrete version per id).
+-   Every `filepath` must be relative, normalized (no `..`, no leading `/`), and under
+    `profiles/<declared profile id>/` or `vendor/<declared extension id>/` for the id that owns the
+    file.
 -   Adopting the new properties requires a schema revision that adds them as optional and relaxes
     nothing else. Until that revision ships, a validator enforcing the current schema rejects a
     manifest that includes them. A manifest that omits them remains valid against the current
@@ -231,9 +243,9 @@ my-cap-table.ocf/
 ├── documents.json             # Core (if document-references profile is ratified into Core)
 └── profiles/
     ├── ocf.holder-identity/
-    │   └── holder_records.json   # extension records referencing stakeholder_id
+    │   └── holders.ocf.json        # extension records referencing stakeholder_id
     └── ocf.acceptance-events/
-        └── acceptances.json      # extension transactions referencing security_id
+        └── acceptances.ocf.json    # extension transactions referencing security_id
 ```
 
 Vendor extension data lives under `vendor/<extension-id>/` and is listed in
@@ -300,23 +312,34 @@ consumer of a profile without being a producer of it (e.g., a law-firm diligence
 
 A profile's OCIP may mark a field required for producers and optional for a consumer to act on. That
 does not relax parsing. A consumer that does not implement the business meaning of such a field must
-still preserve it and must not invent a different meaning. The producer claim is "this data is
-complete for this profile." The consumer claim is "I accept this profile's documents, and I do not
-misread the fields I use."
+not drop or misinterpret it when re-exporting the document; read-only tools may ignore fields they
+do not use and must not invent a different meaning. The producer claim is "this data is complete for
+this profile." The consumer claim is "I accept this profile's documents, and I do not misread the
+fields I use."
 
 ### 7. Validation levels
 
 The OCF validator operates in three modes:
 
-| Condition                                                         | Lenient | **Standard** | Strict  |
-| ----------------------------------------------------------------- | ------- | ------------ | ------- |
-| Unknown profile in manifest (not in registry)                     | Warning | **Warning**  | Error   |
-| Known profile, missing required field                             | Error   | **Error**    | Error   |
-| Known profile, schema-invalid extension record                    | Error   | **Error**    | Error   |
-| Namespace violation (`ocf.*` used by vendor)                      | Warning | **Error**    | Error   |
-| Unknown vendor extension in manifest                              | Ignored | **Ignored**  | Warning |
-| Core record references extension (dependency violation)           | Error   | **Error**    | Error   |
-| Record fails an economic-effect check defined by its profile OCIP | Error   | **Error**    | Error   |
+| Condition                                                                   | Lenient | **Standard** | Strict  |
+| --------------------------------------------------------------------------- | ------- | ------------ | ------- |
+| Unknown coalition profile in manifest (not in registry)                     | Warning | **Warning**  | Error   |
+| Declared coalition profile, registry `status` not `accepted`                | Warning | **Warning**  | Error¹  |
+| Known profile, missing required field                                       | Error   | **Error**    | Error   |
+| Known profile, schema-invalid extension record                              | Error   | **Error**    | Error   |
+| Namespace violation (`ocf.*` on a vendor id, or `com.*` on a profile)       | Warning | **Error**    | Error   |
+| Unknown vendor extension in manifest (no namespace violation)               | Ignored | **Ignored**  | Warning |
+| Declared profile or vendor id with no files in the matching `*_files` array | Error   | **Error**    | Error   |
+| Profile or vendor file for an id not declared in the manifest               | Error   | **Error**    | Error   |
+| Missing `requires_profiles` dependency or unmet `requires_core` (§10)       | Error   | **Error**    | Error   |
+| Circular `requires_profiles` dependency                                     | Error   | **Error**    | Error   |
+| Extension record references a Core id not present in Core files             | Error   | **Error**    | Error   |
+| Core record references extension (dependency violation)                     | Error   | **Error**    | Error   |
+| Record fails an economic-effect check defined by its profile OCIP           | Error   | **Error**    | Error   |
+
+¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
+warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over
+unknown vendor when both apply.
 
 The economic-effect rule in §5 is a review invariant on the profile OCIP. A generic validator does
 not infer economic effect from arbitrary JSON. When a profile's OCIP defines an explicit semantic
@@ -324,8 +347,9 @@ check, the validator runs that check and reports an error in every mode.
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet
-should still load). Strict mode is for regulatory or audit contexts. An unknown coalition profile is
-an error. An unknown vendor extension is a warning, as the table says. It is not a rejection.
+should still load). Strict mode is for regulatory or audit contexts. In strict mode, unknown
+coalition profiles and non-`accepted` coalition profiles (including `rejected`) are errors; unknown
+vendor extensions are warnings, as the table says.
 
 ### 8. Profile lifecycle
 
@@ -341,6 +365,8 @@ Profiles follow the same lifecycle as OCIPs:
    citable. The registry entry stays; `superseded_by` points to the replacement if one exists.
 5. **Superseded** — replaced by a specific newer version. The old version remains in the registry
    forever for citation purposes.
+6. **Rejected** — the TWG does not adopt the OCIP. The registry entry keeps `status: "rejected"` so
+   the reserved id is not reused. `Draft` or `Review` may end here; `Accepted` may not.
 
 ### 9. Graduation to Core
 
@@ -351,7 +377,8 @@ promoted into Core via a new OCIP. The graduation process:
 2. The OCIP specifies the migration path: how existing documents that declare the profile will still
    be valid (the profile becomes a no-op once its fields are in Core, or the profile version bumps
    with a `superseded_by` pointer).
-3. Once accepted, the fields are in Core and the profile is marked `superseded` in the registry.
+3. Once accepted, the fields are in Core and the profile row is marked `superseded` with
+   `superseded_by`: `{ "core": true, "version": "<core-semver>" }`.
 
 This is the schema.org `pending` → `core` pattern: extensions are the farm system for Core, not a
 permanent ghetto.
@@ -455,6 +482,9 @@ or ownership is a Core change, not a profile.
 To demonstrate the shape, here is a minimal profile — `ocf.document-references` — that adds
 document-reference objects to an OCF package without touching Core records.
 
+Each profile schema file defines one top-level definition (one JSON object shape per data file
+name).
+
 ### Profile schema (`profiles/ocf.document-references/1.0.0/schema.json`)
 
 ```json
@@ -489,6 +519,8 @@ document-reference objects to an OCF package without touching Core records.
     }
 }
 ```
+
+The schema `$id` URL is illustrative; published profile schemas use the coalition's canonical host.
 
 ### Document file (`profiles/ocf.document-references/documents.json`)
 
