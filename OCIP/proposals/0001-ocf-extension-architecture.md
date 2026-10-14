@@ -1,9 +1,9 @@
 ---
-ocip: 0001
+ocip: "0001"
 title: OCF Extension Architecture — Profiles, Registry, and Conformance
 status: Draft
 author: Thibauld Favre (thibauld@fairmint.com)
-created: 2026-09-22
+created: "2026-09-22"
 type: Standards Track
 area: core
 ---
@@ -140,13 +140,14 @@ needs holder identity would carry:
 ]
 ```
 
-The validator resolves each manifest declaration by looking up the registry row with that exact `id`
-and that exact concrete `version` (for example `1.0.0`). It then reads that row's
-`requires_profiles`. There, `version` is a semver range, not a registry key. For each dependency the
-validator finds a manifest declaration with the same `id` whose concrete version satisfies the
-range, and confirms that concrete version has its own registry row. A range such as `>=1.0.0 <2.0.0`
-is never used as a lookup key. The validator builds a directed graph of profile ids and rejects a
-cycle. Dependencies are frozen with the registry entry for that version.
+Each `(id, version)` pair is a unique key in the registry; duplicate rows are invalid. The validator
+resolves each manifest declaration by looking up the registry row with that exact `id` and that
+exact concrete `version` (for example `1.0.0`). It then reads that row's `requires_profiles`. There,
+`version` is a semver range, not a registry key. For each dependency the validator finds a manifest
+declaration with the same `id` whose concrete version satisfies the range, and confirms that
+concrete version has its own registry row. A range such as `>=1.0.0 <2.0.0` is never used as a
+lookup key. The validator builds a directed graph of profile ids and rejects a cycle. Dependencies
+are frozen with the registry entry for that version.
 
 Old profile versions are never removed from the registry. A profile that has been superseded keeps
 its entry with `status: "superseded"` and a pointer to its replacement. This is the IETF property:
@@ -321,21 +322,21 @@ fields I use."
 
 The OCF validator operates in three modes:
 
-| Condition                                                                   | Lenient | **Standard** | Strict   |
-| --------------------------------------------------------------------------- | ------- | ------------ | -------- |
-| Unknown coalition profile in manifest (not in registry)                     | Warning | **Warning**  | Error    |
-| Declared coalition profile, registry `status` not `accepted`                | Warning | **Warning**  | Warning¹ |
-| Known profile, missing required field                                       | Error   | **Error**    | Error    |
-| Known profile, schema-invalid extension record                              | Error   | **Error**    | Error    |
-| Namespace violation (`ocf.*` on a vendor id, or `com.*` on a profile)       | Warning | **Error**    | Error    |
-| Unknown vendor extension in manifest (no namespace violation)               | Ignored | **Ignored**  | Warning  |
-| Declared profile or vendor id with no files in the matching `*_files` array | Error   | **Error**    | Error    |
-| Profile or vendor file for an id not declared in the manifest               | Error   | **Error**    | Error    |
-| Missing `requires_profiles` dependency or unmet `requires_core` (§10)       | Error   | **Error**    | Error    |
-| Circular `requires_profiles` dependency                                     | Error   | **Error**    | Error    |
-| Extension record references a Core id not present in Core files             | Error   | **Error**    | Error    |
-| Core record references extension (dependency violation)                     | Error   | **Error**    | Error    |
-| Record fails an economic-effect check defined by its profile OCIP           | Error   | **Error**    | Error    |
+| Condition                                                                                                                                             | Lenient | **Standard** | Strict   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | ------------ | -------- |
+| Unknown coalition profile in manifest (not in registry)                                                                                               | Warning | **Warning**  | Error    |
+| Declared coalition profile, registry `status` not `accepted`                                                                                          | Warning | **Warning**  | Warning¹ |
+| Known profile, missing required field                                                                                                                 | Error   | **Error**    | Error    |
+| Known profile, schema-invalid extension record                                                                                                        | Error   | **Error**    | Error    |
+| Namespace violation (id in `profiles` not starting with `ocf.`, or in `vendor_extensions` not starting with `com.`, including wrong or bare prefixes) | Warning | **Error**    | Error    |
+| Unknown vendor extension in manifest (no namespace violation)                                                                                         | Ignored | **Ignored**  | Warning  |
+| Declared profile or vendor id with no files in the matching `*_files` array                                                                           | Error   | **Error**    | Error    |
+| Profile or vendor file for an id not declared in the manifest                                                                                         | Error   | **Error**    | Error    |
+| Missing `requires_profiles` dependency or unmet `requires_core` (§10)                                                                                 | Error   | **Error**    | Error    |
+| Circular `requires_profiles` dependency                                                                                                               | Error   | **Error**    | Error    |
+| Extension record references a Core id not present in Core files                                                                                       | Error   | **Error**    | Error    |
+| Core record references extension (dependency violation)                                                                                               | Error   | **Error**    | Error    |
+| Record fails an economic-effect check defined by its profile OCIP                                                                                     | Error   | **Error**    | Error    |
 
 ¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
 warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over

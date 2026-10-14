@@ -1,9 +1,9 @@
 ---
-ocip: 0000
+ocip: "0000"
 title: OCIP Template
 status: Accepted
 author: Thibauld Favre (thibauld@fairmint.com)
-created: 2026-09-22
+created: "2026-09-22"
 type: Process
 area: process
 ---
@@ -65,11 +65,11 @@ Every OCIP file begins with a YAML front-matter block:
 
 ```yaml
 ---
-ocip: NNNN
+ocip: "NNNN"
 title: <title>
 status: Draft | Review | Accepted | Deprecated | Superseded | Rejected
 author: <name> (<email or GitHub handle>)
-created: YYYY-MM-DD
+created: "YYYY-MM-DD"
 type: Standards Track | Process | Meta
 area: core | profile | governance | process
 replaces: <OCIP number, if applicable>
