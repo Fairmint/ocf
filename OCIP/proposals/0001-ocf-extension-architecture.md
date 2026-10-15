@@ -35,7 +35,7 @@ This proposal defines the extension mechanism so that:
 -   The OCF schema can stay stable while specialized, non-economic facts live in named profiles
 -   A consumer can determine what a document contains without parsing every record
 -   A producer can claim conformance to a specific profile (e.g., "this document conforms to
-    `ocf.transaction-annotations` 1.0.0")
+    `ocf.transfer-reason` 1.0.0")
 -   The coalition can ratify profiles through the OCIP process and graduate mature ones into the OCF
     schema (see §9)
 
@@ -48,20 +48,19 @@ an extension. A profile may annotate such an event. It must not be the only reco
 
 ### 1. Definitions
 
-| Term                 | Meaning                                                                                                                                                                                                                                                                                        |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **The OCF schema**   | The published Open Cap Format JSON Schema bundle identified by `ocf_version` in the package manifest (currently OCF v1.x). Governed by the OCF specification proper.                                                                                                                           |
-| **Profile**          | A named, versioned, coalition-governed package of additional records that annotate OCF schema objects without changing the cap table a consumer of the OCF schema alone computes. Ratified through the OCIP process. Examples: `ocf.transaction-annotations`, `ocf.securities-law-exemptions`. |
-| **Vendor extension** | A vendor-namespaced set of fields/types produced by a single organization for its own use. Not coalition-governed. Must not collide with profile or OCF schema namespaces.                                                                                                                     |
-| **Registry**         | The authoritative list of all profiles and their versions, maintained in the OCIP repository. Machine-readable (JSON) and human-readable (this repo's documentation).                                                                                                                          |
-| **Manifest**         | The top-level file in an OCF package that declares which profiles and vendor extensions the package uses, along with file checksums and schema version.                                                                                                                                        |
+| Term                 | Meaning                                                                                                                                                                                                                                                                                |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **The OCF schema**   | The published Open Cap Format JSON Schema bundle identified by `ocf_version` in the package manifest (currently OCF v1.x). Governed by the OCF specification proper.                                                                                                                   |
+| **Profile**          | A named, versioned, coalition-governed package of additional records that annotate OCF schema objects without changing the cap table a consumer of the OCF schema alone computes. Ratified through the OCIP process. Examples: `ocf.transfer-reason`, `ocf.securities-law-exemptions`. |
+| **Vendor extension** | A vendor-namespaced set of fields/types produced by a single organization for its own use. Not coalition-governed. Must not collide with profile or OCF schema namespaces.                                                                                                             |
+| **Registry**         | The authoritative list of all profiles and their versions, maintained in the OCIP repository. Machine-readable (JSON) and human-readable (this repo's documentation).                                                                                                                  |
+| **Manifest**         | The top-level file in an OCF package that declares which profiles and vendor extensions the package uses, along with file checksums and schema version.                                                                                                                                |
 
 ### 2. Naming and namespacing
 
 **Profile IDs** use a dotted convention:
 
--   Coalition profiles: `ocf.<name>` (e.g., `ocf.transaction-annotations`,
-    `ocf.securities-law-exemptions`)
+-   Coalition profiles: `ocf.<name>` (e.g., `ocf.transfer-reason`, `ocf.securities-law-exemptions`)
 -   Vendor extensions: `com.<vendor>.<name>` (e.g., `com.example.dividend-details`,
     `com.carta.internal-metadata`)
 
@@ -89,13 +88,13 @@ version). Its structure:
     "version": "1.0.0",
     "profiles": [
         {
-            "id": "ocf.transaction-annotations",
+            "id": "ocf.transfer-reason",
             "version": "1.0.0",
             "status": "accepted",
-            "title": "Transaction annotations",
-            "description": "Structured, non-economic metadata attached to OCF transactions by id.",
-            "schema": "profiles/ocf.transaction-annotations/1.0.0/schema.json",
-            "spec": "proposals/NNNN-transaction-annotations.md",
+            "title": "Transfer reason",
+            "description": "Structured reason for a stock transfer, annotating an existing TX_STOCK_TRANSFER.",
+            "schema": "profiles/ocf.transfer-reason/1.0.0/schema.json",
+            "spec": "proposals/NNNN-transfer-reason.md",
             "requires_ocf": ">=1.0.0",
             "requires_profiles": [],
             "owner": "coalition",
@@ -129,11 +128,11 @@ Coalition profiles use the first six. A vendor extension that opts into the regi
 terminal: the OCIP was not adopted; the id remains reserved for citation.
 
 A profile that depends on another declares that dependency only here. Example: a later profile that
-needs transaction annotations would carry:
+requires structured transfer reasons would carry:
 
 ```json
 "requires_profiles": [
-  { "id": "ocf.transaction-annotations", "version": ">=1.0.0 <2.0.0" }
+  { "id": "ocf.transfer-reason", "version": ">=1.0.0 <2.0.0" }
 ]
 ```
 
@@ -148,8 +147,8 @@ are frozen with the registry entry for that version.
 
 Old profile versions are never removed from the registry. A profile that has been superseded keeps
 its entry with `status: "superseded"` and a pointer to its replacement. This is the IETF property:
-OCIP-0001 is always OCIP-0001, and `ocf.transaction-annotations` 1.0.0 is always
-`ocf.transaction-annotations` 1.0.0.
+OCIP-0001 is always OCIP-0001, and `ocf.transfer-reason` 1.0.0 is always `ocf.transfer-reason`
+1.0.0.
 
 ### 4. Package manifest declaration
 
@@ -185,11 +184,11 @@ file in the package. Profile and vendor payload files must therefore use a plain
     "transactions_files": [
         { "filepath": "transactions.ocf.json", "md5": "d41d8cd98f00b204e9800998ecf8427e" }
     ],
-    "profiles": [{ "id": "ocf.transaction-annotations", "version": "1.0.0" }],
+    "profiles": [{ "id": "ocf.transfer-reason", "version": "1.0.0" }],
     "vendor_extensions": [{ "id": "com.example.internal-tags", "version": "0.1.0" }],
     "profile_files": [
         {
-            "filepath": "profiles/ocf.transaction-annotations/annotations.json",
+            "filepath": "profiles/ocf.transfer-reason/transfer-reasons.json",
             "md5": "d41d8cd98f00b204e9800998ecf8427e"
         }
     ],
@@ -236,8 +235,8 @@ my-cap-table.ocf/
 ├── stock_issuances.ocf.json       # OCF schema (example transaction file)
 ├── documents.ocf.json             # OCF schema — v1 documents_files
 └── profiles/
-    └── ocf.transaction-annotations/
-        └── annotations.json       # extension records; .json not .ocf.json (see §4)
+    └── ocf.transfer-reason/
+        └── transfer-reasons.json  # extension records; .json not .ocf.json (see §4)
 ```
 
 Vendor extension data lives under `vendor/<extension-id>/` and is listed in
@@ -285,8 +284,8 @@ explicitly. The validator runs stated checks. It does not invent them.
 
 A profile's conformance spec defines two roles:
 
-**Producer conformance.** A system claiming _producer_ conformance to `ocf.transaction-annotations`
-1.0.0 must:
+**Producer conformance.** A system claiming _producer_ conformance to `ocf.transfer-reason` 1.0.0
+must:
 
 -   Emit all required fields defined by the profile's schema
 -   Produce valid JSON against the profile's JSON Schema
@@ -294,8 +293,8 @@ A profile's conformance spec defines two roles:
     in the OCF schema files
 -   Include the profile declaration in the manifest
 
-**Consumer conformance.** A system claiming _consumer_ conformance to `ocf.transaction-annotations`
-1.0.0 must:
+**Consumer conformance.** A system claiming _consumer_ conformance to `ocf.transfer-reason` 1.0.0
+must:
 
 -   Parse every field the profile schema defines
 -   Accept a document that contains every producer-required field, without error
@@ -303,7 +302,7 @@ A profile's conformance spec defines two roles:
 
 A system may be a conformant OCF schema producer/consumer without claiming any profile. A system may
 be a consumer of a profile without being a producer of it (e.g., a diligence tool reads
-`ocf.transaction-annotations` but does not produce it).
+`ocf.transfer-reason` but does not produce it).
 
 A profile's OCIP may mark a field required for producers and optional for a consumer to act on. That
 does not relax parsing. A consumer that does not implement the business meaning of such a field must
@@ -476,11 +475,11 @@ distinction.
 ### Why standard mode as default
 
 Treating an unknown coalition profile as an error would make every new profile a breaking change for
-existing validators — the first time anyone ships a document with `ocf.transaction-annotations`,
-every validator that does not know it yet would reject the document. Standard mode (unknown profiles
-are warnings, known profiles are strictly validated) is forward-compatible: a document from 2028
-with profiles that do not exist yet still loads, and the validator tells the consumer "here's a
-profile I don't recognize — look it up in the registry."
+existing validators — the first time anyone ships a document with `ocf.transfer-reason`, every
+validator that does not know it yet would reject the document. Standard mode (unknown profiles are
+warnings, known profiles are strictly validated) is forward-compatible: a document from 2028 with
+profiles that do not exist yet still loads, and the validator tells the consumer "here's a profile I
+don't recognize — look it up in the registry."
 
 ### Precedent
 
@@ -503,30 +502,37 @@ those fields require the minor v1.x schema revision in §4, because `OCFManifest
 
 ## Minimal worked example
 
-OCF v1 already models documents, stakeholder identity, and many transaction fields. To show a gap
-profiles are for, here is a minimal coalition profile — `ocf.transaction-annotations` — that adds
-structured, non-economic metadata on transactions via `ObjectReference`.
+OCF v1 represents gift, estate, escheat, nominee move, and priced secondary sales with the same
+`TX_STOCK_TRANSFER` type and no structured reason field. To show a gap profiles are for, here is an
+illustrative coalition profile — `ocf.transfer-reason` — that adds an optional reason enum and text
+annotating an existing transfer via `ObjectReference`, without inventing a new transaction type per
+reason.
+
+This example is illustrative only: it satisfies the economic-effect rule in §5 (it annotates
+existing transfers and changes no quantities). A real `ocf.transfer-reason` profile would be
+proposed in its own OCIP later.
 
 Each profile schema file defines one top-level definition (one JSON object shape per data file
 name).
 
-### Profile schema (`profiles/ocf.transaction-annotations/1.0.0/schema.json`)
+### Profile schema (`profiles/ocf.transfer-reason/1.0.0/schema.json`)
 
 ```json
 {
     "$schema": "https://json-schema.org/draft/2020-12/schema",
-    "$id": "https://opencaptablecoalition.com/profiles/ocf.transaction-annotations/1.0.0/schema.json",
-    "title": "OCF Transaction Annotations Profile 1.0.0",
+    "$id": "https://opencaptablecoalition.com/profiles/ocf.transfer-reason/1.0.0/schema.json",
+    "title": "OCF Transfer Reason Profile 1.0.0",
     "type": "object",
     "properties": {
-        "transaction_annotations": {
+        "transfer_reasons": {
             "type": "array",
-            "items": { "$ref": "#/$defs/TransactionAnnotation" }
+            "items": { "$ref": "#/$defs/TransferReason" }
         }
     },
-    "required": ["transaction_annotations"],
+    "required": ["transfer_reasons"],
+    "additionalProperties": false,
     "$defs": {
-        "TransactionAnnotation": {
+        "TransferReason": {
             "type": "object",
             "properties": {
                 "id": { "type": "string" },
@@ -538,16 +544,20 @@ name).
                         {
                             "type": "object",
                             "properties": {
-                                "object_type": { "type": "string", "pattern": "^TX_" }
+                                "object_type": { "const": "TX_STOCK_TRANSFER" }
                             },
                             "required": ["object_type"]
                         }
                     ]
                 },
-                "annotation_type": { "type": "string" },
-                "body": { "type": "string" }
+                "reason": {
+                    "type": "string",
+                    "enum": ["SALE", "GIFT", "ESTATE", "ESCHEAT", "NOMINEE_TRANSFER", "OTHER"]
+                },
+                "reason_text": { "type": "string" }
             },
-            "required": ["id", "target", "annotation_type"]
+            "required": ["id", "target", "reason"],
+            "additionalProperties": false
         }
     }
 }
@@ -555,16 +565,21 @@ name).
 
 The schema `$id` URL is illustrative; published profile schemas use the coalition's canonical host.
 
-### Profile data file (`profiles/ocf.transaction-annotations/annotations.json`)
+### Profile data file (`profiles/ocf.transfer-reason/transfer-reasons.json`)
 
 ```json
 {
-    "transaction_annotations": [
+    "transfer_reasons": [
         {
-            "id": "ann-001",
-            "target": { "object_type": "TX_STOCK_ISSUANCE", "object_id": "tx-stock-001" },
-            "annotation_type": "internal_review",
-            "body": "Counsel sign-off recorded 2026-03-15; no cap-table effect."
+            "id": "tr-001",
+            "target": { "object_type": "TX_STOCK_TRANSFER", "object_id": "tx-transfer-001" },
+            "reason": "SALE"
+        },
+        {
+            "id": "tr-002",
+            "target": { "object_type": "TX_STOCK_TRANSFER", "object_id": "tx-transfer-002" },
+            "reason": "GIFT",
+            "reason_text": "Gift to family member; no consideration."
         }
     ]
 }
@@ -575,10 +590,10 @@ The schema `$id` URL is illustrative; published profile schemas use the coalitio
 ```json
 {
     "file_type": "OCF_MANIFEST_FILE",
-    "profiles": [{ "id": "ocf.transaction-annotations", "version": "1.0.0" }],
+    "profiles": [{ "id": "ocf.transfer-reason", "version": "1.0.0" }],
     "profile_files": [
         {
-            "filepath": "profiles/ocf.transaction-annotations/annotations.json",
+            "filepath": "profiles/ocf.transfer-reason/transfer-reasons.json",
             "md5": "d41d8cd98f00b204e9800998ecf8427e"
         }
     ]
@@ -589,8 +604,8 @@ The rest of the manifest (issuer, timestamps, and the required OCF schema `*_fil
 unchanged. See §4.
 
 A consumer of the OCF schema alone parses the transaction files, ignores `profiles/`, and computes
-the identical cap table. A consumer that declares `ocf.transaction-annotations` conformance
-additionally loads `annotations.json` and can resolve structured metadata per transaction.
+the identical cap table. A consumer that declares `ocf.transfer-reason` conformance additionally
+loads `transfer-reasons.json` and can resolve a structured reason per stock transfer.
 
 ## Open questions for the TWG
 
