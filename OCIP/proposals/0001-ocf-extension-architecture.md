@@ -428,8 +428,9 @@ Core files byte-identical. The economic-effect rule in §5 is what keeps the com
 identical: a profile cannot smuggle a split, transfer, or other quantity-changing event into a file
 a Core consumer skips.
 
-This matches OCF v1's existing pattern: `Document` objects with `related_objects` reference Core
-records by ID; they don't modify the Core records they evidence.
+This matches OCF v1's existing pattern: `Document` objects with `related_objects` use
+`ObjectReference` (`object_type`, `object_id`) to point at Core records; they don't modify the Core
+records they evidence.
 
 ### Why a registry, not just a convention
 
@@ -509,14 +510,16 @@ name).
                 "id": { "type": "string" },
                 "uri": { "type": "string", "format": "uri" },
                 "sha256": { "type": "string" },
-                "related_object_ids": {
+                "related_objects": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                        "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/ObjectReference.schema.json"
+                    }
                 },
                 "document_type": { "type": "string" },
                 "description": { "type": "string" }
             },
-            "required": ["id", "uri", "related_object_ids"]
+            "required": ["id", "uri", "related_objects"]
         }
     }
 }
@@ -533,7 +536,10 @@ The schema `$id` URL is illustrative; published profile schemas use the coalitio
             "id": "doc-001",
             "uri": "https://example.com/stock-purchase-agreement.pdf",
             "sha256": "a1b2c3...",
-            "related_object_ids": ["sec-001", "sec-002"],
+            "related_objects": [
+                { "object_type": "TX_STOCK_ISSUANCE", "object_id": "tx-stock-001" },
+                { "object_type": "TX_STOCK_ISSUANCE", "object_id": "tx-stock-002" }
+            ],
             "document_type": "stock_purchase_agreement",
             "description": "Series A stock purchase agreement"
         }
