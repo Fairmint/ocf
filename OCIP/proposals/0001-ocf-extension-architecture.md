@@ -18,7 +18,7 @@ package manifest, validated against coalition-governed schemas, and discoverable
 goal is to let the published OCF schema evolve in a controlled way while standardized, namespaced
 facts that do not change the computed cap table can be declared, validated, and exchanged without
 every vendor inventing ad hoc fields. The same mechanism also applies when the base is derived from
-other OCF-shaped projections; see §11 (Compatibility with Carta Core).
+the OCF Core projection; see §11.
 
 ## Motivation
 
@@ -44,8 +44,9 @@ or ownership (an issuance, transfer, cancellation, split, conversion, or pool ad
 represented in the OCF schema. If the schema cannot express it today, that is a schema change, not
 an extension. A profile may annotate such an event. It must not be the only record of it.
 
-Carta's **Carta Core** projection (documented in `OCF-Composed-Schemas`) is a separate base shape;
-§11 states when this architecture applies to documents built on that base.
+**Carta Core** is Carta's cap-table standard. **OCF Core** is the generated OCF-shaped schema bundle
+in `OCF-Composed-Schemas`, derived from Carta Core. Neither is the same artifact as OCF v1.x; §11
+states when this architecture applies to documents built on the OCF Core projection.
 
 ## Specification
 
@@ -117,7 +118,7 @@ Each object in `profiles` has:
 | `version`           | yes      | Semver for this registry row.                                                                                                        |
 | `status`            | yes      | See lifecycle below.                                                                                                                 |
 | `schema`            | yes      | Path to this row's JSON Schema.                                                                                                      |
-| `requires_ocf`      | yes      | Semver range on the OCF schema (see §10).                                                                                            |
+| `requires_ocf`      | yes      | Semver range on OCF schema releases only (`ocf_version`; see §10).                                                                   |
 | `requires_profiles` | yes      | Array of `{ "id", "version" }` profile dependencies (`version` is a range); `[]` if none.                                            |
 | `owner`             | yes      | `coalition` or vendor name.                                                                                                          |
 | `title`             | no       | Short human title.                                                                                                                   |
@@ -331,7 +332,7 @@ The OCF validator operates in three modes:
 | Profile or vendor file for an id not declared in the manifest                                                                                         | Error   | **Error**    | Error    |
 | Missing `requires_profiles` dependency or unmet `requires_ocf` (§10)                                                                                  | Error   | **Error**    | Error    |
 | Circular `requires_profiles` dependency                                                                                                               | Error   | **Error**    | Error    |
-| Extension record references an OCF schema `id` not present in OCF schema files                                                                        | Error   | **Error**    | Error    |
+| Extension record references an `object_id` (or other id) with no matching `object_type` and id in OCF schema files (ids are unique per type)          | Error   | **Error**    | Error    |
 | OCF schema record references extension (dependency violation)                                                                                         | Error   | **Error**    | Error    |
 | Record fails an economic-effect check defined by its profile OCIP                                                                                     | Error   | **Error**    | Error    |
 
@@ -400,21 +401,23 @@ Hard rules, enforced by the validator:
    range. The validator checks that the manifest declares a satisfying version of each dependency.
 5. **No circular dependencies.** The dependency graph of profile ids is a DAG. The validator rejects
    a cycle.
-6. **OCF schema version floor.** Each profile declares `requires_ocf` as a semver range on its
-   registry entry. The validator compares that range to the numeric `MAJOR.MINOR.PATCH` of the
-   document's `ocf_version` and ignores prerelease and build metadata. `1.2.1-alpha+main` satisfies
-   `>=1.0.0`. If the numeric version does not satisfy the range, the validator reports an error.
+6. **OCF schema version floor.** Each profile declares `requires_ocf` as a semver range scoped to
+   **OCF schema releases only**. The validator compares that range to the numeric
+   `MAJOR.MINOR.PATCH` of the document's `ocf_version` and ignores prerelease and build metadata.
+   `1.2.1-alpha+main` satisfies `>=1.0.0`. If the numeric version does not satisfy the range, the
+   validator reports an error.
 
-### 11. Compatibility with Carta Core
+### 11. Compatibility with the OCF Core projection
 
-Carta Core (the OCF-shaped projection in `OCF-Composed-Schemas`; that repository's README names it
-**Carta Core** and uses **OCF Core** only for its composed schema bundle) is not the same artifact
-as OCF v1.x. This extension architecture is **built for OCF v1** as it evolves; the same mechanism
-also applies to a base derived from Carta Core when all of the following hold:
+**Carta Core** is Carta's cap-table standard. **OCF Core** is the generated OCF-shaped JSON Schema
+bundle in `OCF-Composed-Schemas`, derived from Carta Core. OCF v1.x is a separate published schema
+(`ocf_version`). This extension architecture is **built for OCF v1** as it evolves; the same
+mechanism also applies to packages whose base is the **OCF Core** projection when all of the
+following hold:
 
 (a) Every base record carries a required stable `id` that extensions can target. OCF v1 already
-requires `id` on objects and transactions (`schema/primitives/objects/Object.schema.json`). The
-Carta Core bundle currently omits `id` on its sixteen transaction types.
+requires `id` on objects and transactions (`schema/primitives/objects/Object.schema.json`). The OCF
+Core bundle currently omits `id` on its sixteen transaction types.
 
 (b) The package manifest can carry the four declarations in §4 or an equivalent hook so consumers
 know which profiles and vendor extensions are present.
@@ -422,18 +425,21 @@ know which profiles and vendor extensions are present.
 (c) Extension records can reference base objects through a typed join (`ObjectReference` in v1, or
 an equivalent in the base).
 
-(d) The base exposes a semver version string that `requires_ocf` can target (for Carta-shaped
-packages, that version names the base projection, not OCF v1's `ocf_version` field).
+(d) `requires_ocf` applies only to OCF schema releases (`ocf_version`). A package whose base is the
+OCF Core projection would need its own base identifier and version source for profile dependencies;
+a later (unnumbered) proposal will define that mechanism. This OCIP does not add a base-family field
+to the registry.
 
 (e) Consumers that implement only the base ignore unrecognized files outside the base's declared
 file arrays, as v1 consumers ignore undeclared paths.
 
 (f) Every event that changes holdings, quantities, or ownership stays in the base, never only in a
-profile. Cap-table-affecting fields that Carta Core drops from OCF v1 would have to return to the
-base — not move into profiles.
+profile. Cap-table-affecting fields that the OCF Core projection drops from OCF v1 would have to
+return to the base — not move into profiles.
 
-Non-economic data Carta Core omits relative to OCF v1 (holder identity, acceptances, document
-references, and similar annotations) are natural profile candidates when the base is Carta Core.
+Non-economic data the OCF Core projection omits relative to OCF v1 (holder identity, acceptances,
+document references, and similar annotations) are natural profile candidates when the base is OCF
+Core.
 
 ## Rationale
 
@@ -529,7 +535,18 @@ name).
             "properties": {
                 "id": { "type": "string" },
                 "target": {
-                    "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/ObjectReference.schema.json"
+                    "allOf": [
+                        {
+                            "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/ObjectReference.schema.json"
+                        },
+                        {
+                            "type": "object",
+                            "properties": {
+                                "object_type": { "type": "string", "pattern": "^TX_" }
+                            },
+                            "required": ["object_type"]
+                        }
+                    ]
                 },
                 "annotation_type": { "type": "string" },
                 "body": { "type": "string" }
@@ -601,8 +618,8 @@ additionally loads `annotations.json` and can resolve structured metadata per tr
     objects by `object_type` and `object_id`
 -   `Open-Cap-Format-OCF/schema/primitives/objects/Object.schema.json` — required `id` on OCF
     objects
--   `OCF-Composed-Schemas/README.md` — names **Carta Core** and the composed **OCF Core** schema
-    bundle
+-   `OCF-Composed-Schemas/README.md` — **Carta Core** (Carta's standard) vs **OCF Core** (generated
+    OCF-shaped schema bundle derived from Carta Core)
 -   `OCF-Composed-Schemas/docs/core-lossy-inventory.md` — generated inventory of lossy mappings
 -   `OCF-Composed-Schemas/docs/core-unmapped-inventory.md` — generated inventory of unmapped OCF
     properties
