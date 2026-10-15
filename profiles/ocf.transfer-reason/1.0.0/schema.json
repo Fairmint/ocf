@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opencaptablecoalition.com/profiles/ocf.transfer-reason/1.0.0/schema.json",
+  "title": "OCF Transfer Reason Profile 1.0.0",
+  "type": "object",
+  "properties": {
+    "transfer_reasons": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/TransferReason" }
+    }
+  },
+  "required": ["transfer_reasons"],
+  "additionalProperties": false,
+  "$defs": {
+    "TransferReason": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "target": {
+          "allOf": [
+            {
+              "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/ObjectReference.schema.json"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "object_type": { "const": "TX_STOCK_TRANSFER" }
+              },
+              "required": ["object_type"]
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "SALE",
+            "GIFT",
+            "ESTATE",
+            "ESCHEAT",
+            "NOMINEE_TRANSFER",
+            "OTHER"
+          ]
+        },
+        "reason_text": { "type": "string" }
+      },
+      "required": ["id", "target", "reason"],
+      "additionalProperties": false
+    }
+  }
+}
