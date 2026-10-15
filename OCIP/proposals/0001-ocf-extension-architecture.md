@@ -25,10 +25,11 @@ the OCF Core projection; see §11.
 OCF v1 already gives issuers, stakeholders, transactions, documents with `related_objects`,
 free-text `comments`, and open-ended types such as `CustomConversionMechanism`. Those escape hatches
 are not enough for interoperable extensions: comments are unstructured and unvalidated; custom
-mechanisms are unnamespaced and undeclared; ad hoc fields on otherwise valid objects are invisible
-to consumers and validators. In practice, transfer agents and software vendors either overload
-`comments` or add proprietary JSON beside the standard files — and nothing in the package tells a
-consumer what to expect or how to validate it.
+mechanisms are unnamespaced and undeclared; extra properties on v1 objects are **rejected** by
+schema validation (`additionalProperties: false`), not silently ignored. In practice, transfer
+agents and software vendors either overload `comments` or ship proprietary JSON in sidecar files
+beside the standard package — outside the OCF schema, unchecked by the reference validator, and
+undeclared in the manifest.
 
 This proposal defines the extension mechanism so that:
 
