@@ -17,8 +17,7 @@ This proposal defines the mechanism by which the Open Cap Format extends beyond 
 package manifest, validated against coalition-governed schemas, and discoverable by consumers. The
 goal is to let the published OCF schema evolve in a controlled way while standardized, namespaced
 facts that do not change the computed cap table can be declared, validated, and exchanged without
-every vendor inventing ad hoc fields. The same mechanism also applies when the base is derived from
-the OCF Core projection; see §11.
+every vendor inventing ad hoc fields. Compatibility with other base schemas is covered in §11.
 
 ## Motivation
 
@@ -44,10 +43,6 @@ Not every gap belongs in a profile. An event that changes holdings, quantities, 
 or ownership (an issuance, transfer, cancellation, split, conversion, or pool adjustment) must be
 represented in the OCF schema. If the schema cannot express it today, that is a schema change, not
 an extension. A profile may annotate such an event. It must not be the only record of it.
-
-**Carta Core** is Carta's cap-table standard. **OCF Core** is the generated OCF-shaped schema bundle
-in `OCF-Composed-Schemas`, derived from Carta Core. Neither is the same artifact as OCF v1.x; §11
-states when this architecture applies to documents built on the OCF Core projection.
 
 ## Specification
 
