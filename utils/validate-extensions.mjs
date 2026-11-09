@@ -1,15 +1,25 @@
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
 import fs from "fs";
-import { readFile } from "fs/promises";
-import { normalize, resolve } from "path";
+import { readFile, readdir } from "fs/promises";
+import { normalize, resolve, join } from "path";
+import {
+  DRAFT_07_META,
+  EXTENSION_ERROR_CODES as C,
+} from "./extension-error-codes.mjs";
 
 const REGISTRY_PATH = "./OCIP/registry/profiles.json";
-const OBJECT_REFERENCE_SCHEMA_ID =
-  "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/ObjectReference.schema.json";
+
+const ECONOMIC_FIELD_NAMES = new Set([
+  "quantity",
+  "resulting_security_ids",
+  "security_id",
+  "balance_security_id",
+  "amount",
+  "shares_issued",
+]);
 
 /**
  * @typedef {"lenient" | "standard" | "strict"} ValidationMode
+ * @typedef {{ level: "error" | "warning", code: string, message: string }} ExtensionIssue
  */
 
 function parseSemverCore(version) {
@@ -37,6 +47,25 @@ function compareSemver(a, b) {
     return av.minor - bv.minor;
   }
   return av.patch - bv.patch;
+}
+
+function versionSatisfiesRange(version, range) {
+  const core = parseSemverCore(version);
+  if (!core) {
+    return false;
+  }
+  const gte = range.match(/>=\s*(\d+\.\d+\.\d+)/);
+  const lt = range.match(/<\s*(\d+\.\d+\.\d+)/);
+  if (gte && compareSemver(version, gte[1]) < 0) {
+    return false;
+  }
+  if (lt && compareSemver(version, lt[1]) >= 0) {
+    return false;
+  }
+  if (!gte && !lt && range.trim() === version.trim()) {
+    return true;
+  }
+  return Boolean(gte || lt);
 }
 
 function normalizePackagePath(packageRoot, filepath) {
@@ -79,18 +108,146 @@ function bestKnownRegistryVersion(registry, id, manifestVersion) {
   return null;
 }
 
+export function assertProfileSchemaDraft07(profileSchema) {
+  const schemaUri = profileSchema.$schema;
+  if (schemaUri !== DRAFT_07_META) {
+    throw new Error(
+      `Profile schema must declare "$schema": "${DRAFT_07_META}" (got ${JSON.stringify(
+        schemaUri
+      )}). A future JSON Schema draft would be a profile MAJOR bump.`
+    );
+  }
+}
+
+export function compileProfileSchema(ajv, profileSchema) {
+  assertProfileSchemaDraft07(profileSchema);
+  ajv.addSchema(profileSchema, profileSchema.$id);
+  return ajv.getSchema(profileSchema.$id);
+}
+
+/**
+ * @param {object} ocfFiles — map of relative or absolute paths to parsed JSON
+ */
+export function buildOcfObjectIndex(ocfFiles) {
+  const index = new Set();
+  for (const obj of Object.values(ocfFiles)) {
+    if (obj?.file_type === "OCF_MANIFEST_FILE" && obj.issuer?.id) {
+      index.add(`ISSUER:${obj.issuer.id}`);
+    }
+    if (Array.isArray(obj?.items)) {
+      for (const item of obj.items) {
+        if (item?.id && item?.object_type) {
+          index.add(`${item.object_type}:${item.id}`);
+        }
+      }
+    }
+  }
+  return index;
+}
+
+function walkObjectReferences(node, refs = []) {
+  if (!node || typeof node !== "object") {
+    return refs;
+  }
+  if (
+    typeof node.object_type === "string" &&
+    typeof node.object_id === "string"
+  ) {
+    refs.push({ object_type: node.object_type, object_id: node.object_id });
+  }
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      walkObjectReferences(child, refs);
+    }
+  } else {
+    for (const value of Object.values(node)) {
+      walkObjectReferences(value, refs);
+    }
+  }
+  return refs;
+}
+
+function findEconomicFieldViolations(node, path = "", hits = []) {
+  if (!node || typeof node !== "object") {
+    return hits;
+  }
+  if (Array.isArray(node)) {
+    node.forEach((child, i) =>
+      findEconomicFieldViolations(child, `${path}[${i}]`, hits)
+    );
+    return hits;
+  }
+  for (const [key, value] of Object.entries(node)) {
+    const nextPath = path ? `${path}.${key}` : key;
+    if (ECONOMIC_FIELD_NAMES.has(key) && key !== "object_id") {
+      hits.push(nextPath);
+    } else if (typeof value === "object") {
+      findEconomicFieldViolations(value, nextPath, hits);
+    }
+  }
+  return hits;
+}
+
+function relaxAdditionalProperties(node) {
+  if (!node || typeof node !== "object") {
+    return;
+  }
+  if (node.type === "object" && node.additionalProperties === false) {
+    node.additionalProperties = true;
+  }
+  for (const value of Object.values(node)) {
+    if (typeof value === "object") {
+      relaxAdditionalProperties(value);
+    }
+  }
+}
+
+async function listUndeclaredProfileFiles(packageRoot, declaredPaths) {
+  const profilesRoot = resolve(packageRoot, "profiles");
+  if (!fs.existsSync(profilesRoot)) {
+    return [];
+  }
+  const declared = new Set(
+    declaredPaths.map((p) => p.replace(/^\.\//, "").replace(/\\/g, "/"))
+  );
+  const found = [];
+  async function walk(dir, rel = "") {
+    const entries = await readdir(dir, { withFileTypes: true });
+    for (const ent of entries) {
+      const relPath = rel ? `${rel}/${ent.name}` : ent.name;
+      const abs = join(dir, ent.name);
+      if (ent.isDirectory()) {
+        await walk(abs, relPath);
+      } else if (ent.name.endsWith(".json") && !ent.name.includes("schema")) {
+        const normalized = `profiles/${relPath}`.replace(/\\/g, "/");
+        if (!declared.has(normalized)) {
+          found.push(normalized);
+        }
+      }
+    }
+  }
+  await walk(profilesRoot);
+  return found;
+}
+
 /**
  * @param {object} manifest
  * @param {string} packageRoot
- * @param {ValidationMode} mode
- * @param {boolean} verbose
+ * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string> }} options
  */
 export async function validatePackageExtensions(
   manifest,
   packageRoot,
-  mode = "standard",
-  verbose = false
+  options = {}
 ) {
+  const {
+    mode = "standard",
+    verbose = false,
+    ajv: sharedAjv,
+    ocfObjectIndex = new Set(),
+  } = options;
+
+  /** @type {ExtensionIssue[]} */
   const issues = [];
   const registry = loadRegistry();
 
@@ -102,32 +259,53 @@ export async function validatePackageExtensions(
   const declaredProfileIds = new Set(profiles.map((p) => p.id));
   const declaredVendorIds = new Set(vendorExtensions.map((p) => p.id));
 
-  const push = (level, message) => {
-    issues.push({ level, message });
+  /**
+   * @param {"error" | "warning"} level
+   * @param {string} code
+   * @param {string} message
+   */
+  const push = (level, code, message) => {
+    issues.push({ level, code, message });
     if (verbose) {
-      console.log(`\t[${level}] ${message}`);
+      console.log(`\t[${level}] ${code}: ${message}`);
     }
   };
 
   const manifestIds = new Map();
   for (const decl of profiles) {
     if (manifestIds.has(decl.id)) {
-      push("error", `Duplicate profile id in manifest: ${decl.id}`);
+      push(
+        "error",
+        C.PROFILE_NAMESPACE_VIOLATION,
+        `Duplicate profile id in manifest: ${decl.id}`
+      );
     }
     manifestIds.set(decl.id, decl.version);
     if (!decl.id.startsWith("ocf.")) {
       const level = mode === "lenient" ? "warning" : "error";
-      push(level, `Profile id must start with ocf.: ${decl.id}`);
+      push(
+        level,
+        C.PROFILE_NAMESPACE_VIOLATION,
+        `Profile id must start with ocf.: ${decl.id}`
+      );
     }
   }
   for (const decl of vendorExtensions) {
     if (manifestIds.has(decl.id)) {
-      push("error", `Duplicate vendor extension id in manifest: ${decl.id}`);
+      push(
+        "error",
+        C.PROFILE_NAMESPACE_VIOLATION,
+        `Duplicate vendor extension id in manifest: ${decl.id}`
+      );
     }
     manifestIds.set(decl.id, decl.version);
     if (!decl.id.startsWith("com.")) {
       const level = mode === "lenient" ? "warning" : "error";
-      push(level, `Vendor extension id must start with com.: ${decl.id}`);
+      push(
+        level,
+        C.PROFILE_NAMESPACE_VIOLATION,
+        `Vendor extension id must start with com.: ${decl.id}`
+      );
     }
   }
 
@@ -144,22 +322,11 @@ export async function validatePackageExtensions(
         manifestCore.major === knownCore.major &&
         compareSemver(decl.version, known) > 0
       ) {
-        if (mode === "strict") {
-          push(
-            "warning",
-            `Profile ${decl.id} manifest version ${decl.version} is newer than registry ${known}; validate against ${known} and tolerate unknown optional fields`
-          );
-        } else if (mode === "standard") {
-          push(
-            "warning",
-            `Profile ${decl.id} manifest version ${decl.version} is newer than registry ${known}; validate against ${known} and tolerate unknown optional fields`
-          );
-        } else {
-          push(
-            "warning",
-            `Profile ${decl.id} version ${decl.version} is not in the registry (nearest ${known})`
-          );
-        }
+        push(
+          "warning",
+          C.PROFILE_NEWER_MINOR,
+          `Profile ${decl.id} manifest version ${decl.version} is newer than registry ${known}; validate against ${known} and tolerate unknown optional fields`
+        );
       } else if (
         manifestCore &&
         knownCore &&
@@ -168,12 +335,14 @@ export async function validatePackageExtensions(
         const level = mode === "strict" ? "error" : "warning";
         push(
           level,
+          C.PROFILE_NEWER_MAJOR,
           `Profile ${decl.id} major version ${decl.version} is newer than any known implementation (treat as unknown profile)`
         );
       } else {
         const level = mode === "strict" ? "error" : "warning";
         push(
           level,
+          C.UNKNOWN_COALITION_PROFILE,
           `Unknown coalition profile in manifest: ${decl.id} ${decl.version}`
         );
       }
@@ -181,24 +350,47 @@ export async function validatePackageExtensions(
       if (exact.status === "rejected" && mode === "strict") {
         push(
           "error",
+          C.PROFILE_STATUS_NOT_ACCEPTED,
           `Profile ${decl.id} ${decl.version} has registry status rejected`
         );
       } else {
         push(
           "warning",
+          C.PROFILE_STATUS_NOT_ACCEPTED,
           `Profile ${decl.id} ${decl.version} has registry status ${exact.status}`
         );
       }
     }
-  }
 
-  for (const decl of vendorExtensions) {
-    const inRegistry = findRegistryEntry(registry, decl.id, decl.version);
-    if (!inRegistry && mode === "strict") {
-      push(
-        "warning",
-        `Unknown vendor extension in manifest: ${decl.id} ${decl.version}`
+    let entryForDeps = exact;
+    if (!entryForDeps) {
+      const fallbackVersion = bestKnownRegistryVersion(
+        registry,
+        decl.id,
+        decl.version
       );
+      if (fallbackVersion) {
+        entryForDeps = findRegistryEntry(registry, decl.id, fallbackVersion);
+      }
+    }
+    const requirements = entryForDeps?.requires_profiles ?? [];
+    for (const dep of requirements) {
+      const manifestDecl = profiles.find((p) => p.id === dep.id);
+      if (!manifestDecl) {
+        push(
+          "error",
+          C.PROFILE_UNMET_DEPENDENCY,
+          `Profile ${decl.id} requires ${dep.id} ${dep.version} but it is not declared in manifest profiles`
+        );
+        continue;
+      }
+      if (!versionSatisfiesRange(manifestDecl.version, dep.version)) {
+        push(
+          "error",
+          C.PROFILE_UNMET_DEPENDENCY,
+          `Profile ${decl.id} requires ${dep.id} ${dep.version}; manifest declares ${manifestDecl.version}`
+        );
+      }
     }
   }
 
@@ -207,13 +399,18 @@ export async function validatePackageExtensions(
     const rel = file.filepath.replace(/^\.\//, "").replace(/\\/g, "/");
     const match = rel.match(/^profiles\/([^/]+)\//);
     if (!match) {
-      push("error", `Profile file not under profiles/<id>/: ${file.filepath}`);
+      push(
+        "error",
+        C.PROFILE_FILE_WITHOUT_DECLARATION,
+        `Profile file not under profiles/<id>/: ${file.filepath}`
+      );
       continue;
     }
     const owner = match[1];
     if (!declaredProfileIds.has(owner)) {
       push(
         "error",
+        C.PROFILE_FILE_WITHOUT_DECLARATION,
         `Profile file ${file.filepath} declared but profile id ${owner} is not in manifest profiles`
       );
     }
@@ -224,6 +421,7 @@ export async function validatePackageExtensions(
     if (rel.includes("..")) {
       push(
         "error",
+        C.PROFILE_FILE_WITHOUT_DECLARATION,
         `Profile filepath must be normalized (no ..): ${file.filepath}`
       );
     }
@@ -234,13 +432,18 @@ export async function validatePackageExtensions(
     const rel = file.filepath.replace(/^\.\//, "").replace(/\\/g, "/");
     const match = rel.match(/^vendor\/([^/]+)\//);
     if (!match) {
-      push("error", `Vendor file not under vendor/<id>/: ${file.filepath}`);
+      push(
+        "error",
+        C.PROFILE_FILE_WITHOUT_DECLARATION,
+        `Vendor file not under vendor/<id>/: ${file.filepath}`
+      );
       continue;
     }
     const owner = match[1];
     if (!declaredVendorIds.has(owner)) {
       push(
         "error",
+        C.PROFILE_FILE_WITHOUT_DECLARATION,
         `Vendor file ${file.filepath} declared but extension id ${owner} is not in manifest vendor_extensions`
       );
     }
@@ -252,32 +455,43 @@ export async function validatePackageExtensions(
 
   for (const id of declaredProfileIds) {
     if (!filesForProfile.has(id) || filesForProfile.get(id).length === 0) {
-      push("error", `Declared profile ${id} has no entries in profile_files`);
+      push(
+        "error",
+        C.PROFILE_DECLARED_NO_FILES,
+        `Declared profile ${id} has no entries in profile_files`
+      );
     }
   }
   for (const id of declaredVendorIds) {
     if (!filesForVendor.has(id) || filesForVendor.get(id).length === 0) {
       push(
         "error",
+        C.PROFILE_DECLARED_NO_FILES,
         `Declared vendor extension ${id} has no entries in vendor_extension_files`
       );
     }
   }
 
-  const profileAjv = new Ajv({
-    strict: false,
-    validateSchema: false,
-    allErrors: true,
-  });
-  addFormats(profileAjv);
-  const objectTypeSchema = JSON.parse(
-    fs.readFileSync("./schema/enums/ObjectType.schema.json", "utf8")
+  const undeclaredOnDisk = await listUndeclaredProfileFiles(
+    packageRoot,
+    profileFiles.map((f) => f.filepath)
   );
-  const objectReferenceSchema = JSON.parse(
-    fs.readFileSync("./schema/types/ObjectReference.schema.json", "utf8")
-  );
-  profileAjv.addSchema(objectTypeSchema);
-  profileAjv.addSchema(objectReferenceSchema);
+  for (const path of undeclaredOnDisk) {
+    push(
+      "error",
+      C.PROFILE_FILE_UNDECLARED,
+      `Profile payload on disk is not listed in profile_files: ${path}`
+    );
+  }
+
+  if (!sharedAjv) {
+    push(
+      "error",
+      C.PROFILE_SCHEMA_INVALID,
+      "Internal error: OCF AJV validator required for profile schema validation"
+    );
+    return { ok: false, issues };
+  }
 
   for (const decl of profiles) {
     let schemaVersion = decl.version;
@@ -301,7 +515,14 @@ export async function validatePackageExtensions(
       ? entry.schema.slice(1)
       : entry.schema;
     const profileSchema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
-    profileAjv.addSchema(profileSchema);
+
+    let validate;
+    try {
+      validate = compileProfileSchema(sharedAjv, profileSchema);
+    } catch (e) {
+      push("error", C.PROFILE_SCHEMA_DRAFT_MISMATCH, e.message);
+      continue;
+    }
 
     const tolerateNewerMinor =
       schemaVersion !== decl.version &&
@@ -312,51 +533,48 @@ export async function validatePackageExtensions(
     for (const file of files) {
       const absPath = normalizePackagePath(packageRoot, file.filepath);
       if (!fs.existsSync(absPath)) {
-        push("error", `Profile file missing on disk: ${file.filepath}`);
+        push(
+          "error",
+          C.PROFILE_SCHEMA_INVALID,
+          `Profile file missing on disk: ${file.filepath}`
+        );
         continue;
       }
       const payload = JSON.parse(await readFile(absPath, "utf8"));
-      const validate = profileAjv.getSchema(profileSchema.$id);
-      let valid = validate(payload);
-      if (!valid && tolerateNewerMinor) {
-        const permissiveAjv = new Ajv({
-          strict: false,
-          validateSchema: false,
-          allErrors: true,
-        });
-        addFormats(permissiveAjv);
-        permissiveAjv.addSchema(objectTypeSchema);
-        permissiveAjv.addSchema(objectReferenceSchema);
-        const relaxed = JSON.parse(JSON.stringify(profileSchema));
-        const relaxAdditional = (node) => {
-          if (!node || typeof node !== "object") {
-            return;
-          }
-          if (node.type === "object" && node.additionalProperties === false) {
-            node.additionalProperties = true;
-          }
-          for (const value of Object.values(node)) {
-            if (typeof value === "object") {
-              relaxAdditional(value);
-            }
-          }
-        };
-        relaxAdditional(relaxed);
-        permissiveAjv.addSchema(relaxed);
-        valid = permissiveAjv.getSchema(relaxed.$id)(payload);
-        if (!valid) {
-          push(
-            "error",
-            `Profile ${decl.id} file ${
-              file.filepath
-            } invalid against known schema ${schemaVersion}: ${JSON.stringify(
-              permissiveAjv.errors
-            )}`
-          );
-        }
-      } else if (!valid) {
+
+      const economicHits = findEconomicFieldViolations(payload);
+      for (const hit of economicHits) {
         push(
           "error",
+          C.PROFILE_ECONOMIC_VIOLATION,
+          `Profile ${decl.id} file ${file.filepath} contains cap-table field at ${hit}`
+        );
+      }
+
+      const refs = walkObjectReferences(payload);
+      for (const ref of refs) {
+        const key = `${ref.object_type}:${ref.object_id}`;
+        if (!ocfObjectIndex.has(key)) {
+          push(
+            "error",
+            C.PROFILE_DANGLING_REFERENCE,
+            `Profile ${decl.id} reference ${key} not found in OCF schema files`
+          );
+        }
+      }
+
+      let valid = validate(payload);
+      if (!valid && tolerateNewerMinor) {
+        const relaxed = JSON.parse(JSON.stringify(profileSchema));
+        relaxed.$id = `${profileSchema.$id}?tolerant=${schemaVersion}`;
+        relaxAdditionalProperties(relaxed);
+        const permissiveValidate = compileProfileSchema(sharedAjv, relaxed);
+        valid = permissiveValidate(payload);
+      }
+      if (!valid) {
+        push(
+          "error",
+          C.PROFILE_SCHEMA_INVALID,
           `Profile ${decl.id} file ${file.filepath} invalid: ${JSON.stringify(
             validate.errors
           )}`

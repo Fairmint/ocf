@@ -13,7 +13,8 @@ area: governance
 
 -   **2026-11-09** — Interchange envelope and manifest schema implementation (§4); SHA-256 checksum
     option; profile schema versioning (§2.1); re-export rule (§6, §7); economic-effect rule extended
-    to vendor extensions (§5, §10).
+    to vendor extensions (§5, §10); draft-07 profile schemas (§4); golden conformance fixtures
+    (§6.1, §7.1).
 
 +++
 
@@ -241,6 +242,18 @@ The coalition reference validator (`utils/validate.mjs`) recursively validates e
 file in the package. Profile and vendor payload files must therefore use a plain `.json` suffix (not
 `.ocf.json`), so they are discovered only via `profile_files` and `vendor_extension_files`.
 
+**Profile JSON Schema draft.** Coalition profile schemas MUST declare
+`"$schema": "http://json-schema.org/draft-07/schema"` — the same draft OCF v1 uses. They MUST NOT
+use JSON Schema 2020-12 (or later) until the OCF schema itself majors. Adopting a newer JSON Schema
+draft in a profile is a **profile MAJOR** bump.
+
+Profile `$ref` URIs point at OCF type and object schema `$id`s (for example
+`.../schema/types/ObjectReference.schema.json`). Validators resolve those `$ref`s **locally** from
+the OCF schema bundle already loaded for the package's declared `ocf_version`. Reference validators
+MUST NOT fetch `main` (or any branch) over the network to satisfy profile `$ref`s. The coalition
+validator compiles profile schemas on the same AJV instance that preloads the v1 schema tree (see
+`utils/validate-extensions.mjs`).
+
 ```json
 {
     "file_type": "OCF_MANIFEST_FILE",
@@ -403,6 +416,35 @@ A re-exporter MUST NOT emit a package that:
 Stripping extension payloads while leaving declarations, or re-keying OCF ids without updating
 extensions, produces dangling references — an error in every validation mode (see §7).
 
+#### 6.1 Profile conformance fixtures
+
+Conformance claims are testable using **golden packages** in the layout proposed for
+[OCF-Composed-Schemas#312](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/312).
+The composed-schemas repository is the long-term home of the full suite; this OCIP repository ships
+one worked example under `OCIP/conformance-fixtures/`.
+
+Each golden case provides:
+
+| Directory         | Contents                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------ |
+| `base/`           | Plain OCF v1 package (`*.ocf.json` only; no profile declarations)                                |
+| `with-profiles/`  | **Identical** OCF `*.ocf.json` payloads as `base/`, plus `profiles/` (and manifest declarations) |
+| `expected/`       | Cap-table snapshot (or equivalent fingerprint) computed from `base/`                             |
+| `invalid/<case>/` | A deliberately broken package plus `expected.json` listing stable **error codes** (see §7.1)     |
+
+Required checks:
+
+1. **Economic effect** — `with-profiles/` must reproduce the same cap-table snapshot as `base/` when
+   profile and vendor files are ignored (OCF `*.ocf.json` files in `with-profiles/` are
+   byte-identical to `base/`).
+2. **Re-export pass-through** — a round-trip that claims producer/consumer conformance must preserve
+   profile manifests, payload files, and every `object_id` reference into OCF records (see re-export
+   rule above).
+3. **Negative cases** — each `invalid/<case>/` must trigger the documented error code(s).
+
+Worked in-tree example: `OCIP/conformance-fixtures/transfer-reason-simple/` (`ocf.transfer-reason`
+on a single `TX_STOCK_TRANSFER`). Tests: `utils/conformance-fixtures.test.mjs`.
+
 ### 7. Validation levels
 
 The OCF validator operates in three modes:
@@ -434,6 +476,27 @@ unknown vendor when both apply.
 The economic-effect rule in §5 is a review invariant on the profile OCIP. A generic validator does
 not infer economic effect from arbitrary JSON. When a profile's OCIP defines an explicit semantic
 check, the validator runs that check and reports an error in every mode.
+
+#### 7.1 Stable error codes
+
+The reference validator attaches a machine-stable `code` to each extension issue. Golden fixtures
+and CI use these codes (not free-text messages):
+
+| Code                               | §7 condition (summary)                                       |
+| ---------------------------------- | ------------------------------------------------------------ |
+| `unknown_coalition_profile`        | Manifest profile not in registry                             |
+| `profile_status_not_accepted`      | Registry row exists but status is not `accepted`             |
+| `profile_schema_invalid`           | Payload fails profile JSON Schema                            |
+| `profile_schema_draft_mismatch`    | Profile schema not draft-07                                  |
+| `profile_namespace_violation`      | Id namespace violation (`ocf.*` / `com.*`)                   |
+| `profile_declared_no_files`        | Declaration without `profile_files` entries                  |
+| `profile_file_without_declaration` | `profile_files` entry without matching declaration           |
+| `profile_file_undeclared`          | Profile payload on disk not listed in manifest               |
+| `profile_unmet_dependency`         | `requires_profiles` not satisfied in manifest                |
+| `profile_dangling_reference`       | Extension `object_id` missing from OCF package               |
+| `profile_economic_violation`       | Profile payload contains cap-table field names (§5)          |
+| `profile_newer_minor`              | Manifest profile minor ahead of implemented schema (warning) |
+| `profile_newer_major`              | Manifest profile major ahead of any known schema             |
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet
@@ -618,19 +681,19 @@ name).
 
 ```json
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://opencaptablecoalition.com/profiles/ocf.transfer-reason/1.0.0/schema.json",
     "title": "OCF Transfer Reason Profile 1.0.0",
     "type": "object",
     "properties": {
         "transfer_reasons": {
             "type": "array",
-            "items": { "$ref": "#/$defs/TransferReason" }
+            "items": { "$ref": "#/definitions/TransferReason" }
         }
     },
     "required": ["transfer_reasons"],
     "additionalProperties": false,
-    "$defs": {
+    "definitions": {
         "TransferReason": {
             "type": "object",
             "properties": {

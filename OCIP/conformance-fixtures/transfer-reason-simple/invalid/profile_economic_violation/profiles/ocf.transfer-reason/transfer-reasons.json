@@ -1,0 +1,13 @@
+{
+  "transfer_reasons": [
+    {
+      "id": "tr-fixture-econ",
+      "target": {
+        "object_type": "TX_STOCK_TRANSFER",
+        "object_id": "tx-transfer-fixture-001"
+      },
+      "reason": "OTHER",
+      "quantity": "999"
+    }
+  ]
+}

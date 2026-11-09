@@ -11,7 +11,10 @@ import { resolve } from "path";
 // For GitHub actions integrations
 // TODO - move action integrations into a separate file to keep validator utils clean
 import core from "@actions/core";
-import { validatePackageExtensions } from "./validate-extensions.mjs";
+import {
+  validatePackageExtensions,
+  buildOcfObjectIndex,
+} from "./validate-extensions.mjs";
 
 // build map of object_type to schema $id
 // throws if an unknown object_type value is encountered
@@ -143,7 +146,7 @@ async function getSchemaFilepaths(verbose = false) {
   return paths;
 }
 
-async function getOcfFilesFromDir(path, verbose = false) {
+export async function getOcfFilesFromDir(path, verbose = false) {
   /**
    * Crawl a provided directory and fetch paths to files
    * ending in .ocf.json
@@ -206,9 +209,11 @@ export async function validateOcfDirectory(
 
     if (verbose) console.log("\n--- Validate OCF Files ---------------");
     let manifestObj = null;
+    const parsedOcfByPath = {};
     for (let i = 0; i < ocf_file_buffers.length; i++) {
       if (verbose) console.log(`\n${i + 1})\tAnalyze File: ${ocf_paths[i]}`);
       const obj = JSON.parse(ocf_file_buffers[i].toString());
+      parsedOcfByPath[ocf_paths[i]] = obj;
       if (verbose) {
         console.log(`\tOCF File Type: ${obj.file_type}`);
         console.log(`\tFile Type URI: ${uriLookupForFileType[obj.file_type]}`);
@@ -273,8 +278,12 @@ export async function validateOcfDirectory(
       const extensionResult = await validatePackageExtensions(
         manifestObj,
         path,
-        "standard",
-        verbose
+        {
+          mode: "standard",
+          verbose,
+          ajv,
+          ocfObjectIndex: buildOcfObjectIndex(parsedOcfByPath),
+        }
       );
       const extensionErrors = extensionResult.issues.filter(
         (issue) => issue.level === "error"
@@ -282,7 +291,7 @@ export async function validateOcfDirectory(
       if (extensionErrors.length > 0) {
         console.log("\n\tXX PACKAGE EXTENSION VALIDATION ERRORS:");
         for (const issue of extensionErrors) {
-          console.log(`\t- ${issue.message}`);
+          console.log(`\t- [${issue.code}] ${issue.message}`);
         }
         if (test) {
           core.setFailed("OCF package extension validation failed");
