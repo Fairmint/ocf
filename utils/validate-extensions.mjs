@@ -8,7 +8,6 @@ import {
 import { verifyManifestFileDigests } from "./package-digest-verify.mjs";
 import {
   compareOcfSemverCore,
-  CURRENT_SCHEMA_ROOT,
   resolveOcfSchemaBundle,
 } from "./ocf-version.mjs";
 
@@ -127,10 +126,6 @@ export function assertProfileSchemaDraft07(profileSchema) {
 
 export function compileProfileSchema(ajv, profileSchema) {
   assertProfileSchemaDraft07(profileSchema);
-  const existing = ajv.getSchema(profileSchema.$id);
-  if (existing) {
-    return existing;
-  }
   ajv.addSchema(profileSchema, profileSchema.$id);
   return ajv.getSchema(profileSchema.$id);
 }
@@ -295,9 +290,7 @@ export async function validatePackageExtensions(
     const errors = issues.filter((i) => i.level === "error");
     return { ok: errors.length === 0, issues };
   }
-  if (bundle.fallback) {
-    push("warning", C.OCF_VERSION_SCHEMA_FALLBACK, bundle.message);
-  } else if (verbose) {
+  if (verbose && bundle.loadFromRelease) {
     console.log(`\t${bundle.message}`);
   }
 
@@ -547,23 +540,7 @@ export async function validatePackageExtensions(
     );
   }
 
-  /** @type {import('ajv').default | undefined} */
-  let profileAjv = sharedAjv;
-  if (
-    bundle.ok &&
-    bundle.schemaRoot &&
-    resolve(bundle.schemaRoot) !== resolve(CURRENT_SCHEMA_ROOT)
-  ) {
-    const { getOcfValidator } = await import("./validate.mjs");
-    profileAjv = await getOcfValidator(
-      false,
-      false,
-      false,
-      false,
-      CURRENT_SCHEMA_ROOT
-    );
-  }
-  if (!profileAjv) {
+  if (!sharedAjv) {
     push(
       "error",
       C.PROFILE_SCHEMA_INVALID,
@@ -597,7 +574,7 @@ export async function validatePackageExtensions(
 
     let validate;
     try {
-      validate = compileProfileSchema(profileAjv, profileSchema);
+      validate = compileProfileSchema(sharedAjv, profileSchema);
     } catch (e) {
       push("error", C.PROFILE_SCHEMA_DRAFT_MISMATCH, e.message);
       continue;
@@ -647,7 +624,7 @@ export async function validatePackageExtensions(
         const relaxed = JSON.parse(JSON.stringify(profileSchema));
         relaxed.$id = `${profileSchema.$id}?tolerant=${schemaVersion}`;
         relaxAdditionalProperties(relaxed);
-        const permissiveValidate = compileProfileSchema(profileAjv, relaxed);
+        const permissiveValidate = compileProfileSchema(sharedAjv, relaxed);
         valid = permissiveValidate(payload);
       }
       if (!valid) {

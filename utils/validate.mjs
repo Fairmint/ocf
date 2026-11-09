@@ -15,27 +15,13 @@ import {
   validatePackageExtensions,
   buildOcfObjectIndex,
 } from "./validate-extensions.mjs";
-import { CURRENT_SCHEMA_ROOT, resolveOcfSchemaBundle } from "./ocf-version.mjs";
-
-/** @type {Map<string, import('ajv').default>} */
-const ocfValidatorCache = new Map();
-
-/** @internal Test hook: reset per-minor AJV cache between fixture cases. */
-export function clearOcfValidatorCache() {
-  ocfValidatorCache.clear();
-}
+import { resolveOcfSchemaBundle } from "./ocf-version.mjs";
 
 // build map of object_type to schema $id
 // throws if an unknown object_type value is encountered
-async function buildObjectSchemaMap(
-  verbose = false,
-  schemaRoot = CURRENT_SCHEMA_ROOT
-) {
+async function buildObjectSchemaMap(verbose = false) {
   const object_schemas_map = {};
-  const object_schema_paths = await getSchemaObjectsFilepaths(
-    verbose,
-    schemaRoot
-  );
+  const object_schema_paths = await getSchemaObjectsFilepaths(verbose);
   const object_schema_buffers = await Promise.all(
     object_schema_paths.map((path) => readFile(path))
   );
@@ -44,9 +30,7 @@ async function buildObjectSchemaMap(
   });
 
   const object_type_enum_schema = JSON.parse(
-    fs
-      .readFileSync(resolve(schemaRoot, "enums/ObjectType.schema.json"))
-      .toString()
+    fs.readFileSync("./schema/enums/ObjectType.schema.json").toString()
   );
 
   // Need to update this to handle the two options for object_type props (stll not in
@@ -136,26 +120,25 @@ async function* getFiles(dir) {
   }
 }
 
-async function getSchemaObjectsFilepaths(
-  verbose = false,
-  schemaRoot = CURRENT_SCHEMA_ROOT
-) {
+async function getSchemaObjectsFilepaths(verbose = false) {
+  /**
+   * Crawl ./schema directory from repo root and get all
+   * of the filepaths to schema files (ending in .schema.json)
+   */
   const paths = [];
-  for await (const f of getFiles(resolve(schemaRoot, "objects"))) {
+  for await (const f of getFiles("./schema/objects")) {
     paths.push(f);
   }
   return paths;
 }
 
-async function getSchemaFilepaths(
-  verbose = false,
-  schemaRoot = CURRENT_SCHEMA_ROOT
-) {
+async function getSchemaFilepaths(verbose = false) {
+  /**
+   * Crawl ./schema directory from repo root and get all
+   * of the filepaths to schema files (ending in .schema.json)
+   */
   const paths = [];
-  for await (const f of getFiles(schemaRoot)) {
-    if (!f.endsWith(".schema.json")) {
-      continue;
-    }
+  for await (const f of getFiles("./schema")) {
     paths.push(f);
     if (verbose) {
       console.log(`•\t${f}`);
@@ -196,22 +179,6 @@ function readUriLookupForFileTypes() {
   return JSON.parse(buffer.toString());
 }
 
-function buildUriLookupForSchemaRoot(schemaRoot) {
-  const map = {};
-  const filesDir = resolve(schemaRoot, "files");
-  for (const name of fs.readdirSync(filesDir)) {
-    if (!name.endsWith(".schema.json")) {
-      continue;
-    }
-    const schema = JSON.parse(fs.readFileSync(resolve(filesDir, name), "utf8"));
-    const fileType = schema.properties?.file_type?.const;
-    if (typeof fileType === "string" && schema.$id) {
-      map[fileType] = schema.$id;
-    }
-  }
-  return map;
-}
-
 /**
  * Meant to validate our new multi-file format. Point it at a directory
  * with ocf file jsons, and it will first identify all files with .ocf.json
@@ -228,7 +195,12 @@ export async function validateOcfDirectory(
   test = false
 ) {
   try {
+    const ajv = await getOcfValidator(verbose, false, false, false);
     const ocf_paths = await getOcfFilesFromDir(path, verbose);
+
+    if (verbose)
+      console.log("\n--- Loading URI Lookup for file types ---------------");
+    const uriLookupForFileType = readUriLookupForFileTypes();
 
     if (verbose)
       console.log("\n--- Loading OCF File Buffers... ---------------");
@@ -236,58 +208,13 @@ export async function validateOcfDirectory(
       ocf_paths.map((path) => readFile(path))
     );
 
+    if (verbose) console.log("\n--- Validate OCF Files ---------------");
+    let manifestObj = null;
     const parsedOcfByPath = {};
     for (let i = 0; i < ocf_file_buffers.length; i++) {
-      parsedOcfByPath[ocf_paths[i]] = JSON.parse(
-        ocf_file_buffers[i].toString()
-      );
-    }
-
-    const manifestEntry = Object.entries(parsedOcfByPath).find(
-      ([, obj]) => obj.file_type === "OCF_MANIFEST_FILE"
-    );
-    if (!manifestEntry) {
-      if (test) {
-        core.setFailed("No OCF manifest file found in package");
-      }
-      return false;
-    }
-
-    const manifestObj = manifestEntry[1];
-    const ocfBundle = resolveOcfSchemaBundle(manifestObj.ocf_version);
-    if (!ocfBundle.ok) {
-      if (verbose) {
-        console.log(
-          `\n\tXX UNSUPPORTED ocf_version: ${manifestObj.ocf_version}`
-        );
-        console.log(`\t${ocfBundle.message}`);
-      }
-      if (test) {
-        core.setFailed(`Unsupported ocf_version: ${manifestObj.ocf_version}`);
-      }
-      return false;
-    }
-    if (verbose) {
-      console.log(`\n--- OCF schema bundle: ${ocfBundle.message} ---`);
-    }
-
-    const ajv = await getOcfValidator(
-      verbose,
-      false,
-      false,
-      false,
-      ocfBundle.schemaRoot
-    );
-    const schemaRoot = ocfBundle.schemaRoot;
-    const uriLookupForFileType = buildUriLookupForSchemaRoot(schemaRoot);
-    if (verbose) {
-      console.log("\n--- URI lookup for file types (from schema bundle) ---");
-    }
-
-    if (verbose) console.log("\n--- Validate OCF Files ---------------");
-    for (let i = 0; i < ocf_file_buffers.length; i++) {
       if (verbose) console.log(`\n${i + 1})\tAnalyze File: ${ocf_paths[i]}`);
-      const obj = parsedOcfByPath[ocf_paths[i]];
+      const obj = JSON.parse(ocf_file_buffers[i].toString());
+      parsedOcfByPath[ocf_paths[i]] = obj;
       if (verbose) {
         console.log(`\tOCF File Type: ${obj.file_type}`);
         console.log(`\tFile Type URI: ${uriLookupForFileType[obj.file_type]}`);
@@ -295,6 +222,20 @@ export async function validateOcfDirectory(
 
       // if file is manifest, just validate against the manifest schema
       if (obj.file_type === "OCF_MANIFEST_FILE") {
+        const ocfBundle = resolveOcfSchemaBundle(obj.ocf_version);
+        if (!ocfBundle.ok) {
+          if (verbose) {
+            console.log(`\n\tXX UNSUPPORTED ocf_version: ${obj.ocf_version}`);
+            console.log(`\t${ocfBundle.message}`);
+          }
+          if (test) {
+            core.setFailed(`Unsupported ocf_version: ${obj.ocf_version}`);
+          }
+          return false;
+        }
+        if (verbose && ocfBundle.loadFromRelease) {
+          console.log(`\t${ocfBundle.message}`);
+        }
         const validator = ajv.getSchema(uriLookupForFileType[obj.file_type]);
         const valid = validator(obj);
 
@@ -310,15 +251,13 @@ export async function validateOcfDirectory(
           return false;
         } else {
           if (verbose) console.log(`\t** VALID OCF **`);
+          manifestObj = obj;
         }
         // collect the errors per file and then return them
         // if file is not a manifest, loop through items
         // for each item, get the object_type and then run the validator against that schema
       } else if (obj.hasOwnProperty("items")) {
-        const objectTypeToSchemaIdMap = await buildObjectSchemaMap(
-          verbose,
-          schemaRoot
-        );
+        const objectTypeToSchemaIdMap = await buildObjectSchemaMap(verbose);
         for (let j = 0; j < obj.items.length; j++) {
           let object_type = obj.items[j].object_type;
           let object_schema_uri = objectTypeToSchemaIdMap[object_type];
@@ -491,16 +430,11 @@ export async function getOcfValidator(
   verbose = false,
   check_schema_validity = true,
   test = false,
-  show_all_errors = false,
-  schemaRoot = CURRENT_SCHEMA_ROOT
+  show_all_errors = false
 ) {
-  const cacheKey = resolve(schemaRoot);
-  if (ocfValidatorCache.has(cacheKey)) {
-    return ocfValidatorCache.get(cacheKey);
-  }
   try {
     if (verbose) console.log("\n-->\tLoad Schema Files...\n");
-    const schema_paths = await getSchemaFilepaths(verbose, schemaRoot);
+    const schema_paths = await getSchemaFilepaths(verbose);
 
     if (verbose) console.log("\n-->\tParse Schema Objs...");
     const schema_buffers = await Promise.all(
@@ -524,7 +458,6 @@ export async function getOcfValidator(
 
     if (verbose) console.log("\n-->\tValidator Ready");
 
-    ocfValidatorCache.set(cacheKey, ajv);
     return ajv;
   } catch (e) {
     if (test) core.setFailed(`\tXX\tCould not load validator: ${e.message}`);

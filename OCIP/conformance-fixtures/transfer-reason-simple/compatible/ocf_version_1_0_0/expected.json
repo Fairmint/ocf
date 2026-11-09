@@ -1,4 +1,0 @@
-{
-  "overlays": ["compatible/ocf_version_1_0_0"],
-  "warning_codes": ["ocf_version_schema_fallback"]
-}

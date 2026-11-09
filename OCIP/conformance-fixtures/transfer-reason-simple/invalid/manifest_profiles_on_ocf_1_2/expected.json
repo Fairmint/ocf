@@ -1,4 +1,0 @@
-{
-  "overlays": ["invalid/manifest_profiles_on_ocf_1_2"],
-  "ocf_directory_valid": false
-}

@@ -1,11 +1,7 @@
 import fs from "fs";
 import { readFile } from "fs/promises";
 import { resolve } from "path";
-import {
-  clearOcfValidatorCache,
-  getOcfValidator,
-  getOcfFilesFromDir,
-} from "./validate.mjs";
+import { getOcfValidator, getOcfFilesFromDir } from "./validate.mjs";
 import {
   assertProfileSchemaDraft07,
   buildOcfObjectIndex,
@@ -21,10 +17,6 @@ import { DRAFT_07_META } from "./extension-error-codes.mjs";
 const PROFILE_SCHEMA_PATH = "profiles/ocf.transfer-reason/1.0.0/schema.json";
 
 describe("profile schema draft-07 and AJV integration", () => {
-  afterEach(() => {
-    clearOcfValidatorCache();
-  });
-
   test("transfer-reason profile schema is draft-07 and compiles on the OCF validator", async () => {
     const raw = fs.readFileSync(PROFILE_SCHEMA_PATH, "utf8");
     const profileSchema = JSON.parse(raw);

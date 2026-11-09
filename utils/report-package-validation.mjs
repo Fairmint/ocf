@@ -9,7 +9,6 @@ import {
   getOcfFilesFromDir,
   validateOcfDirectory,
 } from "./validate.mjs";
-import { CURRENT_SCHEMA_ROOT, resolveOcfSchemaBundle } from "./ocf-version.mjs";
 import {
   buildOcfObjectIndex,
   validatePackageExtensions,
@@ -19,6 +18,7 @@ const path = resolve(process.argv[2] ?? ".");
 
 const ocfOk = await validateOcfDirectory(path, false, false);
 
+const ajv = await getOcfValidator(false, false, false, false);
 const ocfPaths = await getOcfFilesFromDir(path);
 const parsed = {};
 for (const p of ocfPaths) {
@@ -29,10 +29,6 @@ const manifest = Object.values(parsed).find(
 );
 let extension = { ok: true, issues: [] };
 if (manifest) {
-  const bundle = resolveOcfSchemaBundle(manifest.ocf_version);
-  const schemaRoot =
-    bundle.ok && bundle.schemaRoot ? bundle.schemaRoot : CURRENT_SCHEMA_ROOT;
-  const ajv = await getOcfValidator(false, false, false, false, schemaRoot);
   extension = await validatePackageExtensions(manifest, path, {
     ajv,
     ocfObjectIndex: buildOcfObjectIndex(parsed),
