@@ -1,3 +1,4 @@
 {
+  "overlays": ["invalid/profile_declared_no_files"],
   "error_codes": ["profile_declared_no_files"]
 }
