@@ -1,0 +1,13 @@
+{
+  "transfer_reasons": [
+    {
+      "id": "tr-sample-001",
+      "target": {
+        "object_type": "TX_STOCK_TRANSFER",
+        "object_id": "test-stock-transfer-minimal"
+      },
+      "reason": "OTHER",
+      "reason_text": "Illustrative profile payload for OCIP-0001 sample package"
+    }
+  ]
+}

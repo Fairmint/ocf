@@ -1,5 +1,5 @@
 {
-  "ocf_version": "1.2.1-alpha+main",
+  "ocf_version": "1.3.0-alpha+main",
   "file_type": "OCF_MANIFEST_FILE",
   "issuer": {
     "object_type": "ISSUER",
@@ -81,6 +81,13 @@
     {
       "filepath": "./Financings.ocf.json",
       "md5": "1963960448f602208ae82ae3e7f90a57"
+    }
+  ],
+  "profiles": [{ "id": "ocf.transfer-reason", "version": "1.0.0" }],
+  "profile_files": [
+    {
+      "filepath": "profiles/ocf.transfer-reason/transfer-reasons.json",
+      "md5": "d41d8cd98f00b204e9800998ecf8427e"
     }
   ],
   "comments": [

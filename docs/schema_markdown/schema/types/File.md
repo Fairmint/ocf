@@ -8,10 +8,11 @@ _Type representation of a file_
 
 **Properties:**
 
-| Property | Type                         | Description                               | Required   |
-| -------- | ---------------------------- | ----------------------------------------- | ---------- |
-| filepath | `STRING`                     | Path to the file within the OCF container | `REQUIRED` |
-| md5      | [schema/types/Md5](./Md5.md) | MD5 file checksum                         | `REQUIRED` |
+| Property | Type                               | Description                                                                                           | Required   |
+| -------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------- | ---------- |
+| filepath | `STRING`                           | Path to the file within the OCF container                                                             | `REQUIRED` |
+| md5      | [schema/types/Md5](./Md5.md)       | MD5 file checksum                                                                                     | `REQUIRED` |
+| sha256   | [schema/types/Sha256](./Sha256.md) | Optional SHA-256 file checksum (recommended for new packages; md5 remains required for compatibility) | -          |
 
 **Source Code:** [schema/types/File](../../../../schema/types/File.schema.json)
 

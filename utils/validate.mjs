@@ -11,6 +11,7 @@ import { resolve } from "path";
 // For GitHub actions integrations
 // TODO - move action integrations into a separate file to keep validator utils clean
 import core from "@actions/core";
+import { validatePackageExtensions } from "./validate-extensions.mjs";
 
 // build map of object_type to schema $id
 // throws if an unknown object_type value is encountered
@@ -204,6 +205,7 @@ export async function validateOcfDirectory(
     );
 
     if (verbose) console.log("\n--- Validate OCF Files ---------------");
+    let manifestObj = null;
     for (let i = 0; i < ocf_file_buffers.length; i++) {
       if (verbose) console.log(`\n${i + 1})\tAnalyze File: ${ocf_paths[i]}`);
       const obj = JSON.parse(ocf_file_buffers[i].toString());
@@ -229,6 +231,7 @@ export async function validateOcfDirectory(
           return false;
         } else {
           if (verbose) console.log(`\t** VALID OCF **`);
+          manifestObj = obj;
         }
         // collect the errors per file and then return them
         // if file is not a manifest, loop through items
@@ -260,6 +263,34 @@ export async function validateOcfDirectory(
         if (verbose) console.log("\t** VALID OCF **");
       }
     }
+
+    if (manifestObj) {
+      if (verbose) {
+        console.log(
+          "\n--- Validate package extensions (OCIP-0001) ---------------"
+        );
+      }
+      const extensionResult = await validatePackageExtensions(
+        manifestObj,
+        path,
+        "standard",
+        verbose
+      );
+      const extensionErrors = extensionResult.issues.filter(
+        (issue) => issue.level === "error"
+      );
+      if (extensionErrors.length > 0) {
+        console.log("\n\tXX PACKAGE EXTENSION VALIDATION ERRORS:");
+        for (const issue of extensionErrors) {
+          console.log(`\t- ${issue.message}`);
+        }
+        if (test) {
+          core.setFailed("OCF package extension validation failed");
+        }
+        return false;
+      }
+    }
+
     console.log("\n\t** ALL FILES VALID OCF **");
     return true;
   } catch (e) {

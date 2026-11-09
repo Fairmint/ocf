@@ -4,9 +4,18 @@ title: OCF Extension Architecture — Profiles, Registry, and Conformance
 status: Draft
 author: Thibauld Favre (thibauld@fairmint.com)
 created: "2026-09-22"
+last_updated: "2026-11-09"
 type: Standards Track
 area: governance
 ---
+
++++ Changelog
+
+-   **2026-11-09** — Interchange envelope and manifest schema implementation (§4); SHA-256 checksum
+    option; profile schema versioning (§2.1); re-export rule (§6, §7); economic-effect rule extended
+    to vendor extensions (§5, §10).
+
++++
 
 # OCIP-0001: OCF Extension Architecture — Profiles, Registry, and Conformance
 
@@ -76,6 +85,40 @@ Versioning follows semantic versioning: `MAJOR.MINOR.PATCH`. A profile version i
 OCF schema release, but each profile declares `requires_ocf` (a semver range) for the minimum OCF
 schema version it was authored against. The document's `ocf_version` is pinned to a specific schema
 release; numeric `MAJOR.MINOR.PATCH` comparison still applies (see §10).
+
+### 2.1 Profile schema versioning
+
+Profile JSON Schemas use the same `MAJOR.MINOR.PATCH` labels as registry rows. The meaning is:
+
+| Bump  | Schema change                                                                                                                                 |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| PATCH | Documentation or non-normative clarification only; the published `schema.json` for that version is unchanged.                                 |
+| MINOR | Additive, backward-compatible schema change only: new properties are optional; existing required sets are unchanged; enums only grow.         |
+| MAJOR | Any breaking change: new required fields, removed or renamed fields, enum contraction, tighter validation, or a change that rejects payloads. |
+
+Profile record types keep `additionalProperties: false`. A MINOR release adds new **optional**
+properties only; it never reopens closed objects to arbitrary keys.
+
+**Consumer behavior when the manifest version is newer than the version implemented:**
+
+The manifest always declares the producer's concrete profile `version` (for example `1.2.0`). The
+registry holds one immutable schema file per `(id, version)` pair.
+
+When a consumer knows `ocf.transfer-reason` but its highest implemented registry row is `1.0.0` and
+the manifest declares `1.1.0`:
+
+-   **Same MAJOR, newer MINOR or PATCH:** The consumer validates each profile payload against the
+    **highest schema version it implements with the same MAJOR** that is still less than or equal to
+    the manifest version (here `1.0.0` against manifest `1.1.0`). Unknown optional fields present in
+    the payload but absent from that schema are **tolerated** (not errors). In **standard** mode the
+    validator emits a **warning** that a newer profile minor is present.
+-   **Newer MAJOR** than any schema the consumer implements (for example manifest `2.0.0`, consumer
+    knows only `1.x`): The profile is treated as an **unknown coalition profile** (see §7): warning
+    in standard mode, error in strict mode.
+
+The reference validator implements newer-minor tolerance by validating against the known schema and,
+when the manifest minor is ahead, relaxing validation only for properties not defined in that schema
+(without accepting invalid values for known properties).
 
 ### 3. The registry
 
@@ -155,16 +198,40 @@ OCIP-0001 is always OCIP-0001, and `ocf.transfer-reason` 1.0.0 is always `ocf.tr
 An OCF package manifest declares which profiles it uses. A package with no profile declarations is
 fully conformant to the OCF schema.
 
+#### Interchange envelope
+
+An OCF **interchange envelope** is the manifest-led package contract shared with the composed-schema
+interchange work
+([OCF-Composed-Schemas#310](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/310)):
+
+1. **Manifest** — single authoritative `OCF_MANIFEST_FILE` listing every payload path the consumer
+   should load.
+2. **Checksums** — each listed file carries an integrity digest (see below).
+3. **Schema release** — `ocf_version` pins the OCF schema bundle used for all `*.ocf.json` files in
+   the package.
+
+Extensions fit the same envelope: optional `profiles`, `vendor_extensions`, `profile_files`, and
+`vendor_extension_files` extend the manifest without replacing the categorized OCF schema `*_files`
+arrays. Producers MUST NOT mix profile or vendor payloads into `stakeholders_files`,
+`transactions_files`, or other OCF schema arrays.
+
+#### Manifest fields
+
 This extends the existing manifest in `schema/files/OCFManifestFile.schema.json`. That schema uses
-categorized `*_files` arrays whose entries are `{ "filepath", "md5" }`
+categorized `*_files` arrays whose entries are `{ "filepath", "md5" [, "sha256"] }`
 (`schema/types/File.schema.json`) and sets `additionalProperties: false`. This proposal does not
 replace that shape. It adds four optional properties:
 
 -   `profiles` — coalition profiles this package uses
 -   `vendor_extensions` — vendor extensions this package uses
--   `profile_files` — coalition profile data files, using the same `{ "filepath", "md5" }` entry as
-    every other file array
+-   `profile_files` — coalition profile data files, using the same file-reference entry as every
+    other file array
 -   `vendor_extension_files` — vendor extension data files, using that same entry
+
+**Checksums.** Each file reference requires `md5` for compatibility with existing packages.
+Producers MAY also include `sha256` (64 hexadecimal characters). Consumers SHOULD verify every
+digest present; omitted `sha256` on older packages is not an error. New packages SHOULD publish both
+digests when practical.
 
 OCF schema files stay in their existing arrays (`stakeholders_files`, `transactions_files`,
 `documents_files`, and the rest). Profile and vendor extension files are not mixed into those
@@ -177,7 +244,7 @@ file in the package. Profile and vendor payload files must therefore use a plain
 ```json
 {
     "file_type": "OCF_MANIFEST_FILE",
-    "ocf_version": "1.2.1-alpha+main",
+    "ocf_version": "1.3.0-alpha+main",
     "stakeholders_files": [
         { "filepath": "stakeholders.ocf.json", "md5": "d41d8cd98f00b204e9800998ecf8427e" }
     ],
@@ -218,10 +285,10 @@ still includes them.
 -   Every `filepath` must be relative, normalized (no `..`, no leading `/`), and under
     `profiles/<declared profile id>/` or `vendor/<declared extension id>/` for the id that owns the
     file.
--   Adopting the new properties requires a **minor** OCF v1.x schema revision that adds them as
-    optional and relaxes nothing else. Until that revision ships, a validator enforcing the current
-    schema rejects a manifest that includes them. A manifest that omits them remains valid against
-    the current schema.
+-   Adopting the new properties requires a **minor** OCF v1.x schema revision (implemented in this
+    repository as `1.3.0-alpha+main`) that adds them as optional and relaxes nothing else. A
+    manifest that omits them remains valid against older v1.x manifests until producers adopt the
+    new `ocf_version`.
 
 ### 5. File placement and cross-references
 
@@ -247,9 +314,12 @@ via `ObjectReference` (`object_type`, `object_id`) as defined in v1. OCF schema 
 reference extensions.
 
 **Economic-effect rule.** Separate files and one-way references are necessary, and they are not
-sufficient. A profile must not be the only record of a fact that changes holdings, quantities,
-authorized amounts, or ownership. A consumer of the OCF schema alone — replaying only OCF schema
-transactions and objects — must produce the same cap table whether or not profile files are present.
+sufficient. A profile or vendor extension must not be the only record of a fact that changes
+holdings, quantities, authorized amounts, or ownership. A consumer of the OCF schema alone —
+replaying only OCF schema transactions and objects — must produce the same cap table whether or not
+**any** coalition profile files (`profile_files`) **or** vendor extension files
+(`vendor_extension_files`) are present. Ignoring everything under `profiles/` and `vendor/` must
+never change computed holdings.
 
 Allowed in a profile:
 
@@ -311,6 +381,28 @@ do not use and must not invent a different meaning. The producer claim is "this 
 this profile." The consumer claim is "I accept this profile's documents, and I do not misread the
 fields I use."
 
+**Re-export rule.** A _re-exporter_ — any system that reads an OCF package, transforms it, and
+writes a new package — MUST satisfy one of the following for every coalition profile and every
+vendor extension present in the source package:
+
+1. **Pass-through:** Copy each declared profile or vendor payload file verbatim; keep manifest
+   declarations, versions, and file paths consistent; and preserve every OCF schema `id` referenced
+   by extension records (`object_id` and related joins). A re-exporter MUST NOT re-key OCF objects
+   without updating every extension record that references those ids.
+2. **Remove together:** Drop the `profiles` / `vendor_extensions` entry **and** remove every
+   corresponding path from `profile_files` / `vendor_extension_files`, and delete those payload
+   files from the package.
+
+A re-exporter MUST NOT emit a package that:
+
+-   declares a profile or vendor extension but lists no files for that id;
+-   lists profile or vendor files whose owning id is not declared; or
+-   contains extension records whose OCF references do not resolve in the emitted OCF schema files
+    (dangling references).
+
+Stripping extension payloads while leaving declarations, or re-keying OCF ids without updating
+extensions, produces dangling references — an error in every validation mode (see §7).
+
 ### 7. Validation levels
 
 The OCF validator operates in three modes:
@@ -330,6 +422,10 @@ The OCF validator operates in three modes:
 | Extension record references an `object_id` (or other id) with no matching `object_type` and id in OCF schema files (ids are unique per type)          | Error   | **Error**    | Error    |
 | OCF schema record references extension (dependency violation)                                                                                         | Error   | **Error**    | Error    |
 | Record fails an economic-effect check defined by its profile OCIP                                                                                     | Error   | **Error**    | Error    |
+| Re-export: manifest declares profile or vendor id but omits its files (or lists files without declaration)                                            | Error   | **Error**    | Error    |
+| Re-export: extension records reference OCF `object_id` values that do not exist after transform                                                       | Error   | **Error**    | Error    |
+| Manifest profile version newer MINOR/PATCH than highest known schema (same MAJOR)                                                                     | Ignored | **Warning**  | Warning  |
+| Manifest profile version newer MAJOR than any known schema for that id                                                                                | Warning | **Warning**  | Error    |
 
 ¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
 warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over
@@ -387,10 +483,12 @@ Hard rules, enforced by the validator:
    reference an extension.
 2. **Extensions are additive.** An extension may not redefine, override, subtract, or rename an OCF
    schema field or type. It may only add new records that reference OCF schema objects.
-3. **Profiles do not change the computed cap table.** See the economic-effect rule in §5. That rule
-   is enforced when the profile is reviewed. A generic document validator enforces it only when the
-   profile OCIP defines an explicit semantic check. A record that fails such a check is an error in
-   every mode.
+3. **Extensions do not change the computed cap table.** See the economic-effect rule in §5. It
+   applies to coalition profiles **and** vendor extensions (`com.*`). Neither may be the sole record
+   of a cap-table-affecting event. That rule is enforced when a profile is reviewed; vendor
+   extensions are the producer's responsibility but must obey the same invariant. A generic document
+   validator enforces it only when the profile OCIP defines an explicit semantic check. A record
+   that fails such a check is an error in every mode.
 4. **Extensions may depend on other extensions.** Dependencies are declared on the registry entry as
    `requires_profiles` (see §3): an array of `{ "id", "version" }`, where `version` is a semver
    range. The validator checks that the manifest declares a satisfying version of each dependency.
@@ -495,10 +593,11 @@ don't recognize — look it up in the registry."
 ## Backwards compatibility
 
 An OCF v1 document that omits `profiles`, `vendor_extensions`, `profile_files`, and
-`vendor_extension_files` stays valid against the current manifest schema. Documents that include
-those fields require the minor v1.x schema revision in §4, because `OCFManifestFile` currently sets
-`additionalProperties: false`. The revision adds the four properties as optional. It does not rename
-`filepath` or `md5`, and it does not replace the categorized `*_files` arrays.
+`vendor_extension_files` stays valid against the manifest schema once upgraded to the minor v1.x
+revision in §4 (`1.3.0-alpha+main` in this repository). File references that include only `md5`
+remain valid; optional `sha256` is additive. The revision adds the four extension properties as
+optional. It does not rename `filepath` or `md5`, and it does not replace the categorized `*_files`
+arrays. Shipping documents with extension declarations requires publishing the minor schema release.
 
 ## Minimal worked example
 
@@ -624,7 +723,12 @@ loads `transfer-reasons.json` and can resolve a structured reason per stock tran
 
 -   `Open-Cap-Format-OCF/schema/files/OCFManifestFile.schema.json` — current manifest
     (`additionalProperties: false`, categorized `*_files` arrays including `documents_files`)
--   `Open-Cap-Format-OCF/schema/types/File.schema.json` — package file reference (`filepath`, `md5`)
+-   `Open-Cap-Format-OCF/schema/types/File.schema.json` — package file reference (`filepath`, `md5`,
+    optional `sha256`)
+-   `Open-Cap-Format-OCF/schema/types/ProfileDeclaration.schema.json` — manifest profile or vendor
+    declaration (`id`, `version`)
+-   [OCF-Composed-Schemas#310](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/310)
+    — interchange envelope (manifest, checksums, schema version)
 -   `Open-Cap-Format-OCF/schema/types/ObjectReference.schema.json` — typed reference to schema
     objects by `object_type` and `object_id`
 -   `Open-Cap-Format-OCF/schema/primitives/objects/Object.schema.json` — required `id` on OCF

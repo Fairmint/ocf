@@ -1,4 +1,19 @@
 {
   "version": "1.0.0",
-  "profiles": []
+  "profiles": [
+    {
+      "id": "ocf.transfer-reason",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Transfer reason",
+      "description": "Structured reason for a stock transfer, annotating an existing TX_STOCK_TRANSFER.",
+      "schema": "profiles/ocf.transfer-reason/1.0.0/schema.json",
+      "spec": "proposals/0001-ocf-extension-architecture.md",
+      "requires_ocf": ">=1.0.0",
+      "requires_profiles": [],
+      "owner": "coalition",
+      "created": "2026-09-22",
+      "superseded_by": null
+    }
+  ]
 }
