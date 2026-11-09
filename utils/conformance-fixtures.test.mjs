@@ -143,7 +143,8 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
           "utf8"
         )
       );
-      const pkg = materialize("with-profiles", overlayPath);
+      const overlayStack = expected.overlays ?? ["with-profiles", overlayPath];
+      const pkg = materialize(...overlayStack);
       const { errors } = await extensionIssuesForPackage(pkg);
       for (const code of expected.error_codes ?? []) {
         expect(errors).toContain(code);
@@ -164,7 +165,8 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
           "utf8"
         )
       );
-      const pkg = materialize("with-profiles", overlayPath);
+      const overlayStack = expected.overlays ?? ["with-profiles", overlayPath];
+      const pkg = materialize(...overlayStack);
       const { errors, warnings } = await extensionIssuesForPackage(pkg);
       for (const code of expected.warning_codes ?? []) {
         expect(warnings).toContain(code);
