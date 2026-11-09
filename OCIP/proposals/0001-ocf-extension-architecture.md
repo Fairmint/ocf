@@ -137,7 +137,9 @@ repository ships one in-tree 1.3 bundle and documents the resolution hook in
 tree** (`getOcfValidator()`), including for manifests such as `1.2.0`; it does not fetch older
 releases over the network. True per-minor validation requires loading the schema tree for the
 declared minor (git tag, npm artifact, or vendored `schema-releases/v1.2.0/`) into a dedicated AJV
-instance.
+instance. **This PR does not ship those vendored bundles**; that implementation is a stacked
+follow-on change (vendored `schema-releases/v1.2/`, per-minor AJV roots, and explicit fallback
+warnings).
 
 **Profile minimum OCF version.** Each registry row carries `min_ocf_version` (a concrete
 `MAJOR.MINOR.PATCH`) for the lowest OCF schema release that profile requires. If the package's
