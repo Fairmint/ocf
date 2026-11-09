@@ -499,6 +499,8 @@ The OCF validator operates in three modes:
 | Listed package file missing on disk                                                                                                                   | Error   | **Error**    | Error    |
 | MD5 on a manifest file entry does not match file on disk                                                                                              | Error   | **Error**    | Error    |
 | SHA-256 on a manifest file entry does not match file on disk (when `sha256` is present)                                                               | Error   | **Error**    | Error    |
+| `ocf_version` names an unsupported major (not 1.x)                                                                                                    | Error   | **Error**    | Error    |
+| Declared profile `min_ocf_version` exceeds package `ocf_version`                                                                                      | Error   | **Error**    | Error    |
 
 ¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
 warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over
