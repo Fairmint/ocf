@@ -20,6 +20,8 @@ export const EXTENSION_ERROR_CODES = {
   PACKAGE_FILE_MISSING: "package_file_missing",
   PACKAGE_FILE_MD5_MISMATCH: "package_file_md5_mismatch",
   PACKAGE_FILE_SHA256_MISMATCH: "package_file_sha256_mismatch",
+  OCF_VERSION_UNSUPPORTED: "ocf_version_unsupported",
+  PROFILE_OCF_VERSION_UNSUPPORTED: "profile_ocf_version_unsupported",
 };
 
 export const DRAFT_07_META = "http://json-schema.org/draft-07/schema";

@@ -6,6 +6,10 @@ import {
   EXTENSION_ERROR_CODES as C,
 } from "./extension-error-codes.mjs";
 import { verifyManifestFileDigests } from "./package-digest-verify.mjs";
+import {
+  compareOcfSemverCore,
+  resolveOcfSchemaBundle,
+} from "./ocf-version.mjs";
 
 const REGISTRY_PATH = "./OCIP/registry/profiles.json";
 
@@ -280,6 +284,16 @@ export async function validatePackageExtensions(
     }
   };
 
+  const bundle = resolveOcfSchemaBundle(manifest.ocf_version);
+  if (!bundle.ok) {
+    push("error", C.OCF_VERSION_UNSUPPORTED, bundle.message);
+    const errors = issues.filter((i) => i.level === "error");
+    return { ok: errors.length === 0, issues };
+  }
+  if (verbose && bundle.loadFromRelease) {
+    console.log(`\t${bundle.message}`);
+  }
+
   const manifestIds = new Map();
   for (const decl of profiles) {
     if (manifestIds.has(decl.id)) {
@@ -317,6 +331,21 @@ export async function validatePackageExtensions(
       );
     }
   }
+
+  const resolveRegistryRow = (decl) => {
+    const row = findRegistryEntry(registry, decl.id, decl.version);
+    if (row) {
+      return row;
+    }
+    const fallbackVersion = bestKnownRegistryVersion(
+      registry,
+      decl.id,
+      decl.version
+    );
+    return fallbackVersion
+      ? findRegistryEntry(registry, decl.id, fallbackVersion)
+      : null;
+  };
 
   for (const decl of profiles) {
     const exact = findRegistryEntry(registry, decl.id, decl.version);
@@ -371,7 +400,25 @@ export async function validatePackageExtensions(
       }
     }
 
-    let entryForDeps = exact;
+    const registryRow = resolveRegistryRow(decl);
+    if (registryRow?.min_ocf_version) {
+      if (
+        compareOcfSemverCore(
+          manifest.ocf_version,
+          registryRow.min_ocf_version
+        ) < 0
+      ) {
+        push(
+          "error",
+          C.PROFILE_OCF_VERSION_UNSUPPORTED,
+          `Profile ${decl.id} requires OCF schema ${registryRow.min_ocf_version} but package declares ${manifest.ocf_version}`
+        );
+      }
+    }
+  }
+
+  for (const decl of profiles) {
+    let entryForDeps = resolveRegistryRow(decl);
     if (!entryForDeps) {
       const fallbackVersion = bestKnownRegistryVersion(
         registry,

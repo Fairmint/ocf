@@ -15,6 +15,7 @@ import {
   validatePackageExtensions,
   buildOcfObjectIndex,
 } from "./validate-extensions.mjs";
+import { resolveOcfSchemaBundle } from "./ocf-version.mjs";
 
 // build map of object_type to schema $id
 // throws if an unknown object_type value is encountered
@@ -221,6 +222,20 @@ export async function validateOcfDirectory(
 
       // if file is manifest, just validate against the manifest schema
       if (obj.file_type === "OCF_MANIFEST_FILE") {
+        const ocfBundle = resolveOcfSchemaBundle(obj.ocf_version);
+        if (!ocfBundle.ok) {
+          if (verbose) {
+            console.log(`\n\tXX UNSUPPORTED ocf_version: ${obj.ocf_version}`);
+            console.log(`\t${ocfBundle.message}`);
+          }
+          if (test) {
+            core.setFailed(`Unsupported ocf_version: ${obj.ocf_version}`);
+          }
+          return false;
+        }
+        if (verbose && ocfBundle.loadFromRelease) {
+          console.log(`\t${ocfBundle.message}`);
+        }
         const validator = ajv.getSchema(uriLookupForFileType[obj.file_type]);
         const valid = validator(obj);
 

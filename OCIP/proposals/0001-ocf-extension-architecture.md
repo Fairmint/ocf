@@ -121,6 +121,27 @@ The reference validator implements newer-minor tolerance by validating against t
 when the manifest minor is ahead, relaxing validation only for properties not defined in that schema
 (without accepting invalid values for known properties).
 
+### 2.2 OCF schema release versioning (`ocf_version`)
+
+A package manifest's `ocf_version` MAY be any **1.x.y** semantic version (including prerelease and
+build metadata such as `1.3.0-alpha+main`). Validators **MUST** reject packages whose `ocf_version`
+names a **2.x** or other non-1 major (`ocf_version_unsupported`).
+
+**Minor resolution.** A validator **MUST** validate each package against the JSON Schema bundle for
+the **minor version the manifest declares**, not against the latest 1.x bundle when they differ. OCF
+1.x minors are additive and optional-only relative to earlier minors in the same major line. When a
+reference build does not embed an older minor's bundle, it **MUST** load that minor's published
+schema release (for example git tag `v1.2.0`) instead of silently substituting a newer minor. This
+repository ships one in-tree 1.3 bundle and documents the resolution hook in
+`utils/ocf-version.mjs`; declared minors less than or equal to the implemented minor may still be
+validated with the in-repo tree when payloads contain no fields introduced in later minors.
+
+**Profile minimum OCF version.** Each registry row carries `min_ocf_version` (a concrete
+`MAJOR.MINOR.PATCH`) for the lowest OCF schema release that profile requires. If the package's
+`ocf_version` is below a declared profile's `min_ocf_version`, validation **MUST** fail with
+`profile_ocf_version_unsupported` (error in all modes). Manifest `profiles[]` entries remain
+`{ id, version }` only; minimums are read from the registry.
+
 ### 3. The registry
 
 The registry is a single JSON file in the OCIP repository (`registry/profiles.json`) plus rendered
@@ -158,6 +179,7 @@ Each object in `profiles` has:
 | `status`            | yes      | See lifecycle below.                                                                                                                 |
 | `schema`            | yes      | Path to this row's JSON Schema.                                                                                                      |
 | `requires_ocf`      | yes      | Semver range on OCF schema releases only (`ocf_version`; see §10).                                                                   |
+| `min_ocf_version`   | yes      | Minimum concrete OCF schema release (`ocf_version`) required to use this profile row (see §2.2).                                     |
 | `requires_profiles` | yes      | Array of `{ "id", "version" }` profile dependencies (`version` is a range); `[]` if none.                                            |
 | `owner`             | yes      | `coalition` or vendor name.                                                                                                          |
 | `title`             | no       | Short human title.                                                                                                                   |
@@ -509,6 +531,8 @@ and CI use these codes (not free-text messages):
 | `package_file_missing`             | Manifest lists a file path with no matching file on disk                                 |
 | `package_file_md5_mismatch`        | Manifest `md5` does not match the file digest                                            |
 | `package_file_sha256_mismatch`     | Manifest `sha256` does not match the file digest                                         |
+| `ocf_version_unsupported`          | Package `ocf_version` is not a supported 1.x release                                     |
+| `profile_ocf_version_unsupported`  | Profile `min_ocf_version` exceeds package `ocf_version`                                  |
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet

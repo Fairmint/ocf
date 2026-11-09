@@ -1,0 +1,4 @@
+{
+  "overlays": ["with-profiles", "invalid/profile_ocf_version_unsupported"],
+  "error_codes": ["profile_ocf_version_unsupported"]
+}

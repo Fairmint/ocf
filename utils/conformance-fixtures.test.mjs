@@ -118,6 +118,28 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
     expect(ok).toBe(true);
   });
 
+  test.each(
+    fs
+      .readdirSync(join(FIXTURE_ROOT, "compatible"))
+      .map((name) => [name, `compatible/${name}`])
+  )(
+    "compatible overlay %s passes OCF directory validation",
+    async (name, overlayPath) => {
+      const expected = JSON.parse(
+        fs.readFileSync(
+          join(FIXTURE_ROOT, overlayPath, "expected.json"),
+          "utf8"
+        )
+      );
+      const overlayStack = expected.overlays ?? [overlayPath];
+      const pkg = materialize(...overlayStack);
+      const ok = await validateOcfDirectory(pkg, false, false);
+      expect(ok).toBe(true);
+      const { errors } = await extensionIssuesForPackage(pkg);
+      expect(errors).toEqual([]);
+    }
+  );
+
   test("re-export pass-through preserves profile payloads and references", async () => {
     const source = materialize("with-profiles");
     const profilePath = join(
