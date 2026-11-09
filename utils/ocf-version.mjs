@@ -42,9 +42,11 @@ export function compareOcfSemverCore(a, b) {
 
 /**
  * Which OCF JSON Schema bundle to use for validating a package.
- * This repository ships one bundle (the current 1.3 tree). Older 1.x minors
- * MUST be validated against the published schema release for that minor;
- * reference validators MAY load those releases by tag when integrated.
+ * **This repository ships one bundle** (the current 1.3 tree under `./schema/`).
+ * `getOcfValidator()` always uses that tree today—even when the manifest says `1.2.0`.
+ * Normative requirement: validate against the declared minor's bundle. To do that here,
+ * load schemas from a vendored path or release tag (e.g. `schema-releases/v1.2.0/`) and
+ * call `getOcfValidator` with that tree; network fetch is not implemented in this hook.
  *
  * @param {string} ocfVersion manifest `ocf_version`
  */

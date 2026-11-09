@@ -11,7 +11,7 @@ Full suites live in that repository; this directory is one worked in-tree exampl
 | `base/`              | **Full** plain OCF v1 package (`*.ocf.json` only; no profiles)                                                       |
 | `with-profiles/`     | **Overlay only:** `Manifest.ocf.json` + `profiles/` (merged onto `base/` by the harness)                             |
 | `expected/`          | Hand-authored cap-table **fingerprint** derived from `base/` transactions (see below)                                |
-| `compatible/<case>/` | **Overlay only** + `expected.json` (positive, e.g. manifest `ocf_version` `1.2.0` on `base/`)                        |
+| `compatible/<case>/` | **Overlay only** + `expected.json` (positive; e.g. `ocf_version` `1.2.0`, or SHA-256 precedence over stale MD5)      |
 | `invalid/<case>/`    | **Overlay only** (files that differ from `with-profiles/` after merge) + `expected.json` (`error_codes`)             |
 | `warnings/<case>/`   | **Overlay only** + `expected.json` (`warning_codes`; economic case uses test-only `ocf.fixtures.economic-heuristic`) |
 

@@ -133,8 +133,11 @@ the **minor version the manifest declares**, not against the latest 1.x bundle w
 reference build does not embed an older minor's bundle, it **MUST** load that minor's published
 schema release (for example git tag `v1.2.0`) instead of silently substituting a newer minor. This
 repository ships one in-tree 1.3 bundle and documents the resolution hook in
-`utils/ocf-version.mjs`; declared minors less than or equal to the implemented minor may still be
-validated with the in-repo tree when payloads contain no fields introduced in later minors.
+`utils/ocf-version.mjs`. **The reference validator in this repository always uses that in-repo
+tree** (`getOcfValidator()`), including for manifests such as `1.2.0`; it does not fetch older
+releases over the network. True per-minor validation requires loading the schema tree for the
+declared minor (git tag, npm artifact, or vendored `schema-releases/v1.2.0/`) into a dedicated AJV
+instance.
 
 **Profile minimum OCF version.** Each registry row carries `min_ocf_version` (a concrete
 `MAJOR.MINOR.PATCH`) for the lowest OCF schema release that profile requires. If the package's
@@ -252,9 +255,10 @@ replace that shape. It adds four optional properties:
 -   `vendor_extension_files` — vendor extension data files, using that same entry
 
 **Checksums.** Each file reference requires `md5` for compatibility with existing packages.
-Producers MAY also include `sha256` (64 hexadecimal characters). Consumers SHOULD verify every
-digest present; omitted `sha256` on older packages is not an error. New packages SHOULD publish both
-digests when practical.
+Producers MAY also include `sha256` (64 hexadecimal characters). When `sha256` is present,
+validators **MUST** verify SHA-256 and **MUST NOT** treat `md5` as authoritative (stale `md5` values
+are permitted). When `sha256` is absent, validators **MUST** verify `md5`. Omitted `sha256` on older
+packages is not an error. New packages SHOULD publish both digests when practical.
 
 OCF schema files stay in their existing arrays (`stakeholders_files`, `transactions_files`,
 `documents_files`, and the rest). Profile and vendor extension files are not mixed into those
@@ -497,8 +501,8 @@ The OCF validator operates in three modes:
 | Manifest profile version newer MINOR/PATCH than highest known schema (same MAJOR)                                                                     | Ignored | **Warning**  | Warning  |
 | Manifest profile version newer MAJOR than any known schema for that id                                                                                | Warning | **Warning**  | Error    |
 | Listed package file missing on disk                                                                                                                   | Error   | **Error**    | Error    |
-| MD5 on a manifest file entry does not match file on disk                                                                                              | Error   | **Error**    | Error    |
-| SHA-256 on a manifest file entry does not match file on disk (when `sha256` is present)                                                               | Error   | **Error**    | Error    |
+| MD5 on a manifest file entry does not match file on disk (only when `sha256` is absent)                                                               | Error   | **Error**    | Error    |
+| SHA-256 on a manifest file entry does not match file on disk (when `sha256` is present; MD5 is not checked)                                           | Error   | **Error**    | Error    |
 | `ocf_version` names an unsupported major (not 1.x)                                                                                                    | Error   | **Error**    | Error    |
 | Declared profile `min_ocf_version` exceeds package `ocf_version`                                                                                      | Error   | **Error**    | Error    |
 
@@ -531,8 +535,8 @@ and CI use these codes (not free-text messages):
 | `profile_newer_minor`              | Manifest profile minor ahead of implemented schema (warning)                             |
 | `profile_newer_major`              | Manifest profile major ahead of any known schema                                         |
 | `package_file_missing`             | Manifest lists a file path with no matching file on disk                                 |
-| `package_file_md5_mismatch`        | Manifest `md5` does not match the file digest                                            |
-| `package_file_sha256_mismatch`     | Manifest `sha256` does not match the file digest                                         |
+| `package_file_md5_mismatch`        | Manifest `md5` does not match the file (entry has no `sha256`)                           |
+| `package_file_sha256_mismatch`     | Manifest `sha256` does not match the file (`sha256` present; MD5 not verified)           |
 | `ocf_version_unsupported`          | Package `ocf_version` is not a supported 1.x release                                     |
 | `profile_ocf_version_unsupported`  | Profile `min_ocf_version` exceeds package `ocf_version`                                  |
 

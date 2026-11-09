@@ -18,6 +18,7 @@ export const EXTENSION_ERROR_CODES = {
   PROFILE_NEWER_MINOR: "profile_newer_minor",
   PROFILE_NEWER_MAJOR: "profile_newer_major",
   PACKAGE_FILE_MISSING: "package_file_missing",
+  /** When the manifest entry has no `sha256`; entries with `sha256` skip MD5 verification. */
   PACKAGE_FILE_MD5_MISMATCH: "package_file_md5_mismatch",
   PACKAGE_FILE_SHA256_MISMATCH: "package_file_sha256_mismatch",
   OCF_VERSION_UNSUPPORTED: "ocf_version_unsupported",

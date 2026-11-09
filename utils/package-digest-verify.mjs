@@ -62,14 +62,6 @@ export function verifyManifestFileDigests(manifest, packageRoot) {
         continue;
       }
       const buffer = fs.readFileSync(absPath);
-      const actualMd5 = md5Hex(buffer);
-      if (actualMd5.toLowerCase() !== String(entry.md5).toLowerCase()) {
-        push(
-          "error",
-          C.PACKAGE_FILE_MD5_MISMATCH,
-          `MD5 mismatch for ${entry.filepath}: manifest ${entry.md5}, actual ${actualMd5}`
-        );
-      }
       if (entry.sha256) {
         const actualSha = sha256Hex(buffer);
         if (actualSha.toLowerCase() !== String(entry.sha256).toLowerCase()) {
@@ -77,6 +69,15 @@ export function verifyManifestFileDigests(manifest, packageRoot) {
             "error",
             C.PACKAGE_FILE_SHA256_MISMATCH,
             `SHA-256 mismatch for ${entry.filepath}: manifest ${entry.sha256}, actual ${actualSha}`
+          );
+        }
+      } else {
+        const actualMd5 = md5Hex(buffer);
+        if (actualMd5.toLowerCase() !== String(entry.md5).toLowerCase()) {
+          push(
+            "error",
+            C.PACKAGE_FILE_MD5_MISMATCH,
+            `MD5 mismatch for ${entry.filepath}: manifest ${entry.md5}, actual ${actualMd5}`
           );
         }
       }
