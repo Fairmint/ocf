@@ -30,6 +30,20 @@
       "owner": "coalition",
       "created": "2026-11-09",
       "superseded_by": null
+    },
+    {
+      "id": "ocf.fixtures.economic-heuristic",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Fixture profile (§5 economic heuristic)",
+      "description": "Conformance-fixture-only. Schema-valid payload that triggers profile_economic_violation advisory.",
+      "schema": "profiles/ocf.fixtures.economic-heuristic/1.0.0/schema.json",
+      "spec": "proposals/0001-ocf-extension-architecture.md",
+      "requires_ocf": ">=1.0.0",
+      "requires_profiles": [],
+      "owner": "coalition",
+      "created": "2026-11-09",
+      "superseded_by": null
     }
   ]
 }

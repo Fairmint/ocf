@@ -54,11 +54,11 @@
       "md5": "fad7bf9ea26f618fe681ff5cbbce2d24"
     }
   ],
-  "profiles": [{ "id": "ocf.transfer-reason", "version": "1.0.0" }],
+  "profiles": [{ "id": "ocf.fixtures.economic-heuristic", "version": "1.0.0" }],
   "profile_files": [
     {
-      "filepath": "profiles/ocf.transfer-reason/transfer-reasons.json",
-      "md5": "ec6fa084935aed8422dbfd7166e35715"
+      "filepath": "profiles/ocf.fixtures.economic-heuristic/heuristic-records.json",
+      "md5": "9436c583e9aaac366fb57db907dec178"
     }
   ]
 }
