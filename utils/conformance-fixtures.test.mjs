@@ -176,7 +176,11 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
         for (const code of expected.error_codes) {
           expect(errors).toContain(code);
         }
+      } else {
+        expect(errors).toEqual([]);
       }
+      const directoryOk = await validateOcfDirectory(pkg, false, false);
+      expect(directoryOk).toBe((expected.error_codes ?? []).length === 0);
     }
   );
 });

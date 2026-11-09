@@ -17,6 +17,9 @@ export const EXTENSION_ERROR_CODES = {
   PROFILE_ECONOMIC_VIOLATION: "profile_economic_violation",
   PROFILE_NEWER_MINOR: "profile_newer_minor",
   PROFILE_NEWER_MAJOR: "profile_newer_major",
+  PACKAGE_FILE_MISSING: "package_file_missing",
+  PACKAGE_FILE_MD5_MISMATCH: "package_file_md5_mismatch",
+  PACKAGE_FILE_SHA256_MISMATCH: "package_file_sha256_mismatch",
 };
 
 export const DRAFT_07_META = "http://json-schema.org/draft-07/schema";

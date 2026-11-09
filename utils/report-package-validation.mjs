@@ -16,7 +16,7 @@ import {
 
 const path = resolve(process.argv[2] ?? ".");
 
-const ocfOk = await validateOcfDirectory(path, true, false);
+const ocfOk = await validateOcfDirectory(path, false, false);
 
 const ajv = await getOcfValidator(false, false, false, false);
 const ocfPaths = await getOcfFilesFromDir(path);

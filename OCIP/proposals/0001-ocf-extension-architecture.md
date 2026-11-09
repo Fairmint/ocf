@@ -474,6 +474,9 @@ The OCF validator operates in three modes:
 | Re-export: extension records reference OCF `object_id` values that do not exist after transform                                                       | Error   | **Error**    | Error    |
 | Manifest profile version newer MINOR/PATCH than highest known schema (same MAJOR)                                                                     | Ignored | **Warning**  | Warning  |
 | Manifest profile version newer MAJOR than any known schema for that id                                                                                | Warning | **Warning**  | Error    |
+| Listed package file missing on disk                                                                                                                   | Error   | **Error**    | Error    |
+| MD5 on a manifest file entry does not match file on disk                                                                                              | Error   | **Error**    | Error    |
+| SHA-256 on a manifest file entry does not match file on disk (when `sha256` is present)                                                               | Error   | **Error**    | Error    |
 
 ¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
 warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over
@@ -503,6 +506,9 @@ and CI use these codes (not free-text messages):
 | `profile_economic_violation`       | Advisory: profile payload uses cap-table-like field names (§5); **warning** in all modes |
 | `profile_newer_minor`              | Manifest profile minor ahead of implemented schema (warning)                             |
 | `profile_newer_major`              | Manifest profile major ahead of any known schema                                         |
+| `package_file_missing`             | Manifest lists a file path with no matching file on disk                                 |
+| `package_file_md5_mismatch`        | Manifest `md5` does not match the file digest                                            |
+| `package_file_sha256_mismatch`     | Manifest `sha256` does not match the file digest                                         |
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet

@@ -38,60 +38,60 @@
   "stock_plans_files": [
     {
       "filepath": "./StockPlans.ocf.json",
-      "md5": "c3e68dd645c6ab810f036923706355c8"
+      "md5": "b9b4bc19ace8c9e416ecd851806b407c"
     }
   ],
   "stock_legend_templates_files": [
     {
       "filepath": "./StockLegends.ocf.json",
-      "md5": "931d44dbd132cc09aef64ae4bab61987"
+      "md5": "c2a06add52272ae01e3db229596f617e"
     }
   ],
   "stock_classes_files": [
     {
       "filepath": "./StockClasses.ocf.json",
-      "md5": "45bbd5a565154f8c4a762c3d4fd711f1"
+      "md5": "9f6f7e9fdb8e82690191d563bbaeafa1"
     }
   ],
   "transactions_files": [
     {
       "filepath": "./Transactions.ocf.json",
-      "md5": "ab35839164924530cac5eecbb19f2c4d"
+      "md5": "5e46e48e838d7b31d815e7eb7f032397"
     }
   ],
   "stakeholders_files": [
     {
       "filepath": "./Stakeholders.ocf.json",
-      "md5": "12c14ee9ac8e71a120cee15d075ecea6"
+      "md5": "560a237e60b346e704a3c86b19effdb6"
     }
   ],
   "vesting_terms_files": [
     {
       "filepath": "./VestingTerms.ocf.json",
-      "md5": "c386f2a435dcb00ff89e08f30ed8e843"
+      "md5": "91145f34bebc7f587bbb3ed3586705d1"
     }
   ],
   "valuations_files": [
     {
       "filepath": "./Valuations.ocf.json",
-      "md5": "2a284a50fed8a0d07f10ed36edb14fc5"
+      "md5": "ba543976e773abfd5de4a9be8787a18f"
     }
   ],
   "financings_files": [
     {
       "filepath": "./Financings.ocf.json",
-      "md5": "1963960448f602208ae82ae3e7f90a57"
+      "md5": "ce10d7e2f00df85f0146a0f5b5904d9d"
     }
   ],
   "profiles": [{ "id": "ocf.transfer-reason", "version": "1.0.0" }],
   "profile_files": [
     {
       "filepath": "profiles/ocf.transfer-reason/transfer-reasons.json",
-      "md5": "d41d8cd98f00b204e9800998ecf8427e"
+      "md5": "992ffd4122679e21f9fee1dac8217e24"
     }
   ],
   "comments": [
     "This is an optional comment",
-    "These md5 hashes are just dummy values. They've not been recalculated in a long time, but we should look into recalculating them dynamically via an actions or pre-commit hook."
+    "Manifest file digests are verified by the reference validator (MD5 required; SHA-256 when present)."
   ]
 }

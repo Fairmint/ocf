@@ -5,6 +5,7 @@ import {
   DRAFT_07_META,
   EXTENSION_ERROR_CODES as C,
 } from "./extension-error-codes.mjs";
+import { verifyManifestFileDigests } from "./package-digest-verify.mjs";
 
 const REGISTRY_PATH = "./OCIP/registry/profiles.json";
 
@@ -249,6 +250,14 @@ export async function validatePackageExtensions(
 
   /** @type {ExtensionIssue[]} */
   const issues = [];
+  const digestResult = verifyManifestFileDigests(manifest, packageRoot);
+  issues.push(...digestResult.issues);
+  if (verbose && digestResult.issues.length > 0) {
+    for (const issue of digestResult.issues) {
+      console.log(`\t[${issue.level}] ${issue.code}: ${issue.message}`);
+    }
+  }
+
   const registry = loadRegistry();
 
   const profiles = manifest.profiles ?? [];

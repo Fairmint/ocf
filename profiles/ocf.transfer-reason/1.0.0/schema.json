@@ -41,7 +41,12 @@
             "OTHER"
           ]
         },
-        "reason_text": { "type": "string" }
+        "reason_text": { "type": "string" },
+        "advisory_hints": {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "Optional non-authoritative hints. Cap-table-like property names are advisory-only (§5)."
+        }
       },
       "required": ["id", "target", "reason"],
       "additionalProperties": false

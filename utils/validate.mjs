@@ -289,9 +289,11 @@ export async function validateOcfDirectory(
         (issue) => issue.level === "error"
       );
       if (extensionErrors.length > 0) {
-        console.log("\n\tXX PACKAGE EXTENSION VALIDATION ERRORS:");
-        for (const issue of extensionErrors) {
-          console.log(`\t- [${issue.code}] ${issue.message}`);
+        if (verbose) {
+          console.log("\n\tXX PACKAGE EXTENSION VALIDATION ERRORS:");
+          for (const issue of extensionErrors) {
+            console.log(`\t- [${issue.code}] ${issue.message}`);
+          }
         }
         if (test) {
           core.setFailed("OCF package extension validation failed");
@@ -300,7 +302,9 @@ export async function validateOcfDirectory(
       }
     }
 
-    console.log("\n\t** ALL FILES VALID OCF **");
+    if (verbose) {
+      console.log("\n\t** ALL FILES VALID OCF **");
+    }
     return true;
   } catch (e) {
     if (test) {

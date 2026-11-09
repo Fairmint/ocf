@@ -7,7 +7,9 @@
         "object_id": "tx-transfer-fixture-001"
       },
       "reason": "OTHER",
-      "quantity": "999"
+      "advisory_hints": {
+        "quantity": "999"
+      }
     }
   ]
 }
