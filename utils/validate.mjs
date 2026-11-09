@@ -470,7 +470,13 @@ export async function validateOcfFileAtPath(
     const ocf_instance = JSON.parse(ocf_instance_str);
     if (verbose)
       console.log("\n\n--- OCF Instance ---------------\n", ocf_instance);
-    await ValidateOcfFile(ocf_instance, verbose, test, show_all_errors);
+    const ok = await ValidateOcfFile(
+      ocf_instance,
+      verbose,
+      test,
+      show_all_errors
+    );
+    return ok;
   } catch (e) {
     if (test) {
       core.setFailed(`\t\tFailed to validate OCF file at path: ${e.message}`);

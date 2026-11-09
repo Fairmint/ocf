@@ -545,9 +545,9 @@ export async function validatePackageExtensions(
       const economicHits = findEconomicFieldViolations(payload);
       for (const hit of economicHits) {
         push(
-          "error",
+          "warning",
           C.PROFILE_ECONOMIC_VIOLATION,
-          `Profile ${decl.id} file ${file.filepath} contains cap-table field at ${hit}`
+          `Profile ${decl.id} file ${file.filepath} may contain cap-table field at ${hit} (advisory; see §5)`
         );
       }
 

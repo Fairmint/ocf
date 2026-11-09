@@ -8,6 +8,10 @@ import {
   compileProfileSchema,
   validatePackageExtensions,
 } from "./validate-extensions.mjs";
+import {
+  materializeFixturePackage,
+  removeMaterializedPackage,
+} from "./conformance-fixture-harness.mjs";
 import { DRAFT_07_META } from "./extension-error-codes.mjs";
 
 const PROFILE_SCHEMA_PATH = "profiles/ocf.transfer-reason/1.0.0/schema.json";
@@ -39,8 +43,9 @@ describe("profile schema draft-07 and AJV integration", () => {
   });
 
   test("with-profiles fixture validates extensions using preloaded OCF $ref targets", async () => {
-    const packageRoot = resolve(
-      "OCIP/conformance-fixtures/transfer-reason-simple/with-profiles"
+    const packageRoot = materializeFixturePackage(
+      resolve("OCIP/conformance-fixtures/transfer-reason-simple"),
+      ["with-profiles"]
     );
     const ajv = await getOcfValidator(false, false, false, false);
     const paths = await getOcfFilesFromDir(packageRoot);
@@ -58,5 +63,6 @@ describe("profile schema draft-07 and AJV integration", () => {
     });
     const errors = result.issues.filter((i) => i.level === "error");
     expect(errors).toEqual([]);
+    removeMaterializedPackage(packageRoot);
   });
 });

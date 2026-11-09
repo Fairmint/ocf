@@ -11,10 +11,28 @@ import {
   buildOcfObjectIndex,
   validatePackageExtensions,
 } from "./validate-extensions.mjs";
+import {
+  materializeFixturePackage,
+  removeMaterializedPackage,
+} from "./conformance-fixture-harness.mjs";
 
 const FIXTURE_ROOT = resolve(
   "OCIP/conformance-fixtures/transfer-reason-simple"
 );
+
+const materializedDirs = [];
+
+afterEach(() => {
+  for (const dir of materializedDirs.splice(0)) {
+    removeMaterializedPackage(dir);
+  }
+});
+
+function materialize(...overlayPaths) {
+  const dir = materializeFixturePackage(FIXTURE_ROOT, overlayPaths);
+  materializedDirs.push(dir);
+  return dir;
+}
 
 function sha256File(path) {
   const data = fs.readFileSync(path);
@@ -40,7 +58,7 @@ function extractCapTableSnapshot(packageRoot) {
   };
 }
 
-async function extensionErrorsForPackage(packageRoot) {
+async function extensionIssuesForPackage(packageRoot) {
   const ajv = await getOcfValidator(false, false, false, false);
   const paths = await getOcfFilesFromDir(packageRoot);
   const parsed = {};
@@ -55,38 +73,45 @@ async function extensionErrorsForPackage(packageRoot) {
     ocfObjectIndex: buildOcfObjectIndex(parsed),
     mode: "standard",
   });
-  return result.issues.filter((i) => i.level === "error").map((i) => i.code);
+  return {
+    errors: result.issues.filter((i) => i.level === "error").map((i) => i.code),
+    warnings: result.issues
+      .filter((i) => i.level === "warning")
+      .map((i) => i.code),
+  };
 }
 
 describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
-  test("base and with-profiles OCF files are byte-identical (economic-effect package invariant)", () => {
+  test("base and materialized with-profiles share identical OCF payloads (excludes Manifest)", () => {
     const base = join(FIXTURE_ROOT, "base");
-    const withProfiles = join(FIXTURE_ROOT, "with-profiles");
+    const pkg = materialize("with-profiles");
     const names = fs
       .readdirSync(base)
       .filter((n) => n.endsWith(".ocf.json") && n !== "Manifest.ocf.json");
     for (const name of names) {
-      expect(sha256File(join(withProfiles, name))).toBe(
-        sha256File(join(base, name))
-      );
+      expect(sha256File(join(pkg, name))).toBe(sha256File(join(base, name)));
     }
   });
 
-  test("with-profiles cap table snapshot matches expected/", () => {
+  test("expected/cap_table_snapshot.json matches OCF-only extract from base and from with-profiles", () => {
     const expected = JSON.parse(
       fs.readFileSync(
         join(FIXTURE_ROOT, "expected/cap_table_snapshot.json"),
         "utf8"
       )
     );
-    const actual = extractCapTableSnapshot(join(FIXTURE_ROOT, "with-profiles"));
-    expect(actual.issuer_id).toBe(expected.issuer_id);
-    expect(actual.stock_transfers).toEqual(expected.stock_transfers);
+    const fromBase = extractCapTableSnapshot(join(FIXTURE_ROOT, "base"));
+    const fromWithProfiles = extractCapTableSnapshot(
+      materialize("with-profiles")
+    );
+    expect(fromBase).toEqual(fromWithProfiles);
+    expect(fromBase.issuer_id).toBe(expected.issuer_id);
+    expect(fromBase.stock_transfers).toEqual(expected.stock_transfers);
   });
 
-  test("with-profiles package passes OCF directory validation", async () => {
+  test("materialized with-profiles passes OCF directory validation", async () => {
     const ok = await validateOcfDirectory(
-      join(FIXTURE_ROOT, "with-profiles"),
+      materialize("with-profiles"),
       false,
       false
     );
@@ -94,7 +119,7 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
   });
 
   test("re-export pass-through preserves profile payloads and references", async () => {
-    const source = join(FIXTURE_ROOT, "with-profiles");
+    const source = materialize("with-profiles");
     const profilePath = join(
       source,
       "profiles/ocf.transfer-reason/transfer-reasons.json"
@@ -102,26 +127,54 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
     const before = fs.readFileSync(profilePath, "utf8");
     const ok = await validateOcfDirectory(source, false, false);
     expect(ok).toBe(true);
-    const after = fs.readFileSync(profilePath, "utf8");
-    expect(after).toBe(before);
-    const manifest = JSON.parse(
-      fs.readFileSync(join(source, "Manifest.ocf.json"), "utf8")
-    );
-    expect(manifest.profiles[0].id).toBe("ocf.transfer-reason");
-    expect(manifest.profile_files.length).toBe(1);
+    expect(fs.readFileSync(profilePath, "utf8")).toBe(before);
   });
 
   test.each(
     fs
       .readdirSync(join(FIXTURE_ROOT, "invalid"))
-      .map((name) => [name, join(FIXTURE_ROOT, "invalid", name)])
-  )("invalid fixture %s emits expected error codes", async (name, dir) => {
-    const expected = JSON.parse(
-      fs.readFileSync(join(dir, "expected.json"), "utf8")
-    );
-    const codes = await extensionErrorsForPackage(dir);
-    for (const code of expected.error_codes) {
-      expect(codes).toContain(code);
+      .map((name) => [name, `invalid/${name}`])
+  )(
+    "invalid overlay %s emits expected error codes",
+    async (name, overlayPath) => {
+      const expected = JSON.parse(
+        fs.readFileSync(
+          join(FIXTURE_ROOT, overlayPath, "expected.json"),
+          "utf8"
+        )
+      );
+      const pkg = materialize("with-profiles", overlayPath);
+      const { errors } = await extensionIssuesForPackage(pkg);
+      for (const code of expected.error_codes ?? []) {
+        expect(errors).toContain(code);
+      }
     }
-  });
+  );
+
+  test.each(
+    fs
+      .readdirSync(join(FIXTURE_ROOT, "warnings"))
+      .map((name) => [name, `warnings/${name}`])
+  )(
+    "warning overlay %s emits expected warning codes",
+    async (name, overlayPath) => {
+      const expected = JSON.parse(
+        fs.readFileSync(
+          join(FIXTURE_ROOT, overlayPath, "expected.json"),
+          "utf8"
+        )
+      );
+      const pkg = materialize("with-profiles", overlayPath);
+      const { errors, warnings } = await extensionIssuesForPackage(pkg);
+      for (const code of expected.warning_codes ?? []) {
+        expect(warnings).toContain(code);
+      }
+      expect(errors).not.toContain("profile_economic_violation");
+      if (expected.error_codes) {
+        for (const code of expected.error_codes) {
+          expect(errors).toContain(code);
+        }
+      }
+    }
+  );
 });

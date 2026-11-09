@@ -425,22 +425,27 @@ one worked example under `OCIP/conformance-fixtures/`.
 
 Each golden case provides:
 
-| Directory         | Contents                                                                                         |
-| ----------------- | ------------------------------------------------------------------------------------------------ |
-| `base/`           | Plain OCF v1 package (`*.ocf.json` only; no profile declarations)                                |
-| `with-profiles/`  | **Identical** OCF `*.ocf.json` payloads as `base/`, plus `profiles/` (and manifest declarations) |
-| `expected/`       | Cap-table snapshot (or equivalent fingerprint) computed from `base/`                             |
-| `invalid/<case>/` | A deliberately broken package plus `expected.json` listing stable **error codes** (see §7.1)     |
+| Directory          | Contents                                                                                       |
+| ------------------ | ---------------------------------------------------------------------------------------------- |
+| `base/`            | Full plain OCF v1 package (`*.ocf.json` only; no profile declarations)                         |
+| `with-profiles/`   | **Overlay only:** manifest + `profiles/` (merged onto `base/`; OCF payloads stay from `base/`) |
+| `expected/`        | Cap-table fingerprint authored from `base/` transaction extract (see harness checks below)     |
+| `invalid/<case>/`  | **Overlay only** (differs from `with-profiles/`) + `expected.json` (`error_codes`)             |
+| `warnings/<case>/` | **Overlay only** + `expected.json` (`warning_codes`) for advisory checks                       |
+
+Harness: `utils/conformance-fixture-harness.mjs` copies `base/`, then applies overlays in order.
 
 Required checks:
 
-1. **Economic effect** — `with-profiles/` must reproduce the same cap-table snapshot as `base/` when
-   profile and vendor files are ignored (OCF `*.ocf.json` files in `with-profiles/` are
-   byte-identical to `base/`).
+1. **Economic effect** — After materializing `base/` + `with-profiles/` overlay, every non-manifest
+   `*.ocf.json` file is byte-identical to `base/`. Jest also compares a **manual fingerprint**
+   (`expected/cap_table_snapshot.json`) to a shallow extract (issuer id + transfer id/quantity) from
+   OCF transaction files — not a full cap-table replay engine.
 2. **Re-export pass-through** — a round-trip that claims producer/consumer conformance must preserve
    profile manifests, payload files, and every `object_id` reference into OCF records (see re-export
    rule above).
-3. **Negative cases** — each `invalid/<case>/` must trigger the documented error code(s).
+3. **Negative cases** — each `invalid/<case>/` overlay must trigger the documented error code(s).
+4. **Advisory warnings** — each `warnings/<case>/` overlay must trigger documented warning code(s).
 
 Worked in-tree example: `OCIP/conformance-fixtures/transfer-reason-simple/` (`ocf.transfer-reason`
 on a single `TX_STOCK_TRANSFER`). Tests: `utils/conformance-fixtures.test.mjs`.
@@ -464,6 +469,7 @@ The OCF validator operates in three modes:
 | Extension record references an `object_id` (or other id) with no matching `object_type` and id in OCF schema files (ids are unique per type)          | Error   | **Error**    | Error    |
 | OCF schema record references extension (dependency violation)                                                                                         | Error   | **Error**    | Error    |
 | Record fails an economic-effect check defined by its profile OCIP                                                                                     | Error   | **Error**    | Error    |
+| Heuristic: profile payload uses cap-table field names (advisory; §5 review rule)                                                                      | Warning | **Warning**  | Warning  |
 | Re-export: manifest declares profile or vendor id but omits its files (or lists files without declaration)                                            | Error   | **Error**    | Error    |
 | Re-export: extension records reference OCF `object_id` values that do not exist after transform                                                       | Error   | **Error**    | Error    |
 | Manifest profile version newer MINOR/PATCH than highest known schema (same MAJOR)                                                                     | Ignored | **Warning**  | Warning  |
@@ -482,21 +488,21 @@ check, the validator runs that check and reports an error in every mode.
 The reference validator attaches a machine-stable `code` to each extension issue. Golden fixtures
 and CI use these codes (not free-text messages):
 
-| Code                               | §7 condition (summary)                                       |
-| ---------------------------------- | ------------------------------------------------------------ |
-| `unknown_coalition_profile`        | Manifest profile not in registry                             |
-| `profile_status_not_accepted`      | Registry row exists but status is not `accepted`             |
-| `profile_schema_invalid`           | Payload fails profile JSON Schema                            |
-| `profile_schema_draft_mismatch`    | Profile schema not draft-07                                  |
-| `profile_namespace_violation`      | Id namespace violation (`ocf.*` / `com.*`)                   |
-| `profile_declared_no_files`        | Declaration without `profile_files` entries                  |
-| `profile_file_without_declaration` | `profile_files` entry without matching declaration           |
-| `profile_file_undeclared`          | Profile payload on disk not listed in manifest               |
-| `profile_unmet_dependency`         | `requires_profiles` not satisfied in manifest                |
-| `profile_dangling_reference`       | Extension `object_id` missing from OCF package               |
-| `profile_economic_violation`       | Profile payload contains cap-table field names (§5)          |
-| `profile_newer_minor`              | Manifest profile minor ahead of implemented schema (warning) |
-| `profile_newer_major`              | Manifest profile major ahead of any known schema             |
+| Code                               | §7 condition (summary)                                                                   |
+| ---------------------------------- | ---------------------------------------------------------------------------------------- |
+| `unknown_coalition_profile`        | Manifest profile not in registry                                                         |
+| `profile_status_not_accepted`      | Registry row exists but status is not `accepted`                                         |
+| `profile_schema_invalid`           | Payload fails profile JSON Schema                                                        |
+| `profile_schema_draft_mismatch`    | Profile schema not draft-07                                                              |
+| `profile_namespace_violation`      | Id namespace violation (`ocf.*` / `com.*`)                                               |
+| `profile_declared_no_files`        | Declaration without `profile_files` entries                                              |
+| `profile_file_without_declaration` | `profile_files` entry without matching declaration                                       |
+| `profile_file_undeclared`          | Profile payload on disk not listed in manifest                                           |
+| `profile_unmet_dependency`         | `requires_profiles` not satisfied in manifest                                            |
+| `profile_dangling_reference`       | Extension `object_id` missing from OCF package                                           |
+| `profile_economic_violation`       | Advisory: profile payload uses cap-table-like field names (§5); **warning** in all modes |
+| `profile_newer_minor`              | Manifest profile minor ahead of implemented schema (warning)                             |
+| `profile_newer_major`              | Manifest profile major ahead of any known schema                                         |
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.
 Lenient mode is for forward-compatible parsing (a 2028 document with profiles that don't exist yet

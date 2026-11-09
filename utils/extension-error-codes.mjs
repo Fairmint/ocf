@@ -13,6 +13,7 @@ export const EXTENSION_ERROR_CODES = {
   PROFILE_FILE_UNDECLARED: "profile_file_undeclared",
   PROFILE_UNMET_DEPENDENCY: "profile_unmet_dependency",
   PROFILE_DANGLING_REFERENCE: "profile_dangling_reference",
+  /** Advisory cap-table field-name heuristic; always emitted as warning (§7). */
   PROFILE_ECONOMIC_VIOLATION: "profile_economic_violation",
   PROFILE_NEWER_MINOR: "profile_newer_minor",
   PROFILE_NEWER_MAJOR: "profile_newer_major",
