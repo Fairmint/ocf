@@ -1,0 +1,61 @@
+{
+  "stock_holds": [
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-settle-1",
+      "security_id": "sec-sh-001",
+      "date": "2024-02-01",
+      "hold_type": "REGISTER_SETTLEMENT",
+      "reference": "SETTLE-001",
+      "reason_text": "Books-and-records settlement hold",
+      "quantity": "50"
+    },
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-pre-split",
+      "security_id": "sec-sh-001",
+      "date": "2024-04-01",
+      "hold_type": "REGISTER_SETTLEMENT",
+      "reference": "SETTLE-PRE-SPLIT",
+      "reason_text": "Pre-split settlement (voided for quantity after class split)",
+      "quantity": "30"
+    },
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-stop-1",
+      "security_id": "sec-sh-001",
+      "date": "2024-06-01",
+      "hold_type": "STOP_TRANSFER",
+      "reference": "ORDER-2024-88",
+      "reason_text": "Stop transfer per court order"
+    },
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-post-split",
+      "security_id": "sec-sh-001",
+      "date": "2024-06-05",
+      "hold_type": "REGISTER_SETTLEMENT",
+      "reference": "SETTLE-POST",
+      "reason_text": "Post-split settlement in post-split share units",
+      "quantity": "80"
+    }
+  ],
+  "stock_hold_cancellations": [
+    {
+      "object_type": "TX_STOCK_HOLD_CANCELLATION",
+      "id": "cancel-settle-1",
+      "date": "2024-02-15",
+      "hold_id": "hold-settle-1",
+      "security_id": "sec-sh-001",
+      "reason_text": "Settlement completed"
+    },
+    {
+      "object_type": "TX_STOCK_HOLD_CANCELLATION",
+      "id": "cancel-stop-1",
+      "date": "2024-06-20",
+      "hold_id": "hold-stop-1",
+      "security_id": "sec-sh-001",
+      "reason_text": "Order lifted"
+    }
+  ]
+}
