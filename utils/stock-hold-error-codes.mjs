@@ -9,6 +9,7 @@ export const STOCK_HOLD_ERROR_CODES = {
   CANCELLATION_WRONG_SECURITY: "stock_hold_cancellation_wrong_security",
   SETTLEMENT_OVER_QUANTITY: "stock_hold_settlement_over_quantity",
   TERMINAL_DURING_STOP: "stock_hold_terminal_during_stop",
+  CANCELLATION_OF_CLOSED_HOLD: "stock_hold_cancellation_of_closed_hold",
 };
 
 export const TERMINAL_STOCK_SECURITY_TX_TYPES = new Set([

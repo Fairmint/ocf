@@ -31,10 +31,11 @@ are expected to reuse the primitives in a later minor or sibling profile.
 1. **No economic effect** — holds never change ownership; cap-table readers that ignore the profile
    still compute the same table.
 2. **Valid cancellation** — `hold_id` must reference a hold on the same `security_id`, not already
-   cancelled (split does not cancel).
+   cancelled or closed by a terminal (a hold voided for quantity by split remains cancellable).
 3. **Terminal closure** — any stock security terminal (`TX_STOCK_TRANSFER`, `TX_STOCK_CANCELLATION`,
    `TX_STOCK_REPURCHASE`, `TX_STOCK_RETRACTION`, `TX_STOCK_CONVERSION`, `TX_STOCK_REISSUANCE`,
    `TX_STOCK_CONSOLIDATION`) closes open holds on that `security_id` (partial terminals included).
+   Cancelling a closed hold yields `stock_hold_cancellation_of_closed_hold`.
 4. **Stop gates terminals** — while a `STOP_TRANSFER` is open, no terminal on that security is valid
    until cancelled (prevents silent lift).
 5. **Settlement quantity cap** — open `REGISTER_SETTLEMENT` holds cannot exceed outstanding quantity
@@ -61,6 +62,7 @@ are expected to reuse the primitives in a later minor or sibling profile.
 | `stock_hold_cancellation_wrong_security` | `security_id` mismatch           |
 | `stock_hold_settlement_over_quantity`    | Rule 5                           |
 | `stock_hold_terminal_during_stop`        | Rule 4                           |
+| `stock_hold_cancellation_of_closed_hold` | Rule 3 — cancel after terminal   |
 
 ## Open questions
 

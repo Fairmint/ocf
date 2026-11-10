@@ -1,0 +1,24 @@
+{
+  "stock_holds": [
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-settle-closed",
+      "security_id": "sec-sh-001",
+      "date": "2024-02-01",
+      "hold_type": "REGISTER_SETTLEMENT",
+      "reference": "SETTLE-X",
+      "reason_text": "Settlement hold before partial transfer",
+      "quantity": "50"
+    }
+  ],
+  "stock_hold_cancellations": [
+    {
+      "object_type": "TX_STOCK_HOLD_CANCELLATION",
+      "id": "cancel-after-terminal",
+      "date": "2024-03-15",
+      "hold_id": "hold-settle-closed",
+      "security_id": "sec-sh-001",
+      "reason_text": "Cancel after security consumed"
+    }
+  ]
+}

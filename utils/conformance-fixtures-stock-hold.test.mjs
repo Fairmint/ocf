@@ -85,5 +85,8 @@ describe("OCIP stock-hold conformance fixtures", () => {
     for (const code of expected.error_codes ?? []) {
       expect(errors).toContain(code);
     }
+    if (expected.exactly_one_error) {
+      expect(errors).toEqual(expected.error_codes ?? []);
+    }
   });
 });

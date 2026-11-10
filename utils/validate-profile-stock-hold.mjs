@@ -44,7 +44,7 @@ function cmpTxn(a, b) {
  * @param {(level: 'error' | 'warning', code: string, message: string) => void} push
  */
 function buildHoldState(payload) {
-  /** @type {Map<string, { id: string, security_id: string, date: string, hold_type: string, quantity?: string, cancelled: boolean, closed: boolean }>} */
+  /** @type {Map<string, { id: string, security_id: string, date: string, hold_type: string, quantity?: string, cancelled: boolean, closed: boolean, closedDate?: string }>} */
   const holds = new Map();
   for (const h of payload.stock_holds ?? []) {
     holds.set(h.id, {
@@ -55,6 +55,7 @@ function buildHoldState(payload) {
       quantity: h.quantity,
       cancelled: false,
       closed: false,
+      closedDate: undefined,
     });
   }
   return holds;
@@ -274,6 +275,19 @@ export function validateStockHoldProfileSemantics(payload, transactions, push) {
         );
         continue;
       }
+      if (
+        hold.closed &&
+        hold.closedDate &&
+        hold.closedDate <= cancel.date &&
+        !hold.cancelled
+      ) {
+        push(
+          "error",
+          C.CANCELLATION_OF_CLOSED_HOLD,
+          `Hold cancellation ${cancel.id} targets hold ${cancel.hold_id} already closed by a terminal transaction on ${hold.security_id}`
+        );
+        continue;
+      }
       if (cancel.security_id !== hold.security_id) {
         push(
           "error",
@@ -363,8 +377,9 @@ export function validateStockHoldProfileSemantics(payload, transactions, push) {
           }
         }
         for (const hold of holds.values()) {
-          if (hold.security_id === sid && !hold.cancelled) {
+          if (hold.security_id === sid && !hold.cancelled && !hold.closed) {
             hold.closed = true;
+            hold.closedDate = event.date;
           }
         }
       }
