@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://opencaptablecoalition.com/profiles/ocf.security-legend/1.0.0/schema.json",
+  "title": "OCF Security Legend Profile 1.0.0",
+  "type": "object",
+  "properties": {
+    "security_legend_assignments": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/SecurityLegendAssignment" }
+    }
+  },
+  "required": ["security_legend_assignments"],
+  "additionalProperties": false,
+  "definitions": {
+    "SecurityLegendAssignment": {
+      "type": "object",
+      "description": "Attach STOCK_LEGEND_TEMPLATE text to a non-stock issuance security_id (convertible, warrant, equity compensation).",
+      "properties": {
+        "object_type": { "const": "SECURITY_LEGEND_ASSIGNMENT" },
+        "id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "security_id": { "type": "string" },
+        "legend_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string" }
+        },
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": ["object_type", "id", "date", "security_id", "legend_ids"],
+      "additionalProperties": false
+    }
+  }
+}

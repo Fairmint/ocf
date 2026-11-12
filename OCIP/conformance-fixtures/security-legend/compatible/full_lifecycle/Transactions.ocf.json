@@ -1,0 +1,133 @@
+{
+  "file_type": "OCF_TRANSACTIONS_FILE",
+  "items": [
+    {
+      "object_type": "TX_CONVERTIBLE_ISSUANCE",
+      "id": "tx-safe-001",
+      "security_id": "sec-safe-001",
+      "date": "2024-01-15",
+      "security_law_exemptions": [
+        { "description": "Reg S", "jurisdiction": "US" }
+      ],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "SAFE-1",
+      "convertible_type": "SAFE",
+      "investment_amount": { "amount": "500000", "currency": "USD" },
+      "conversion_triggers": [
+        {
+          "trigger_id": "SAFE-1.TRIG",
+          "nickname": "Equity financing",
+          "trigger_description": "Converts on qualified financing",
+          "type": "AUTOMATIC_ON_CONDITION",
+          "trigger_condition": "Next equity financing above threshold",
+          "conversion_right": {
+            "type": "CONVERTIBLE_CONVERSION_RIGHT",
+            "conversion_mechanism": {
+              "type": "SAFE_CONVERSION",
+              "conversion_timing": "PRE_MONEY",
+              "conversion_mfn": false
+            },
+            "converts_to_future_round": true
+          }
+        }
+      ],
+      "seniority": 1
+    },
+    {
+      "object_type": "TX_WARRANT_ISSUANCE",
+      "id": "tx-warrant-001",
+      "security_id": "sec-warrant-001",
+      "date": "2024-02-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "W-1",
+      "quantity": "10000",
+      "exercise_price": { "amount": "1.00", "currency": "USD" },
+      "purchase_price": { "amount": "0.01", "currency": "USD" },
+      "exercise_triggers": [
+        {
+          "trigger_id": "W-1.TRIG",
+          "nickname": "Elective",
+          "trigger_description": "Holder may exercise until expiration",
+          "type": "ELECTIVE_IN_RANGE",
+          "start_date": "2024-02-01",
+          "end_date": "2034-02-01",
+          "conversion_right": {
+            "type": "WARRANT_CONVERSION_RIGHT",
+            "conversion_mechanism": {
+              "type": "FIXED_AMOUNT_CONVERSION",
+              "converts_to_quantity": "10000"
+            },
+            "converts_to_stock_class_id": "sc-fixture-common"
+          }
+        }
+      ],
+      "warrant_expiration_date": "2034-02-01"
+    },
+    {
+      "object_type": "TX_EQUITY_COMPENSATION_ISSUANCE",
+      "id": "tx-ec-001",
+      "security_id": "sec-ec-001",
+      "date": "2024-03-01",
+      "security_law_exemptions": [
+        { "description": "Rule 701", "jurisdiction": "US" }
+      ],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "OPT-1",
+      "stock_class_id": "sc-fixture-common",
+      "compensation_type": "OPTION",
+      "quantity": "25000",
+      "exercise_price": { "amount": "0.10", "currency": "USD" },
+      "expiration_date": "2034-03-01",
+      "termination_exercise_windows": [
+        { "reason": "VOLUNTARY_OTHER", "period": 90, "period_type": "DAYS" }
+      ]
+    },
+    {
+      "object_type": "TX_CONVERTIBLE_CONVERSION",
+      "id": "tx-safe-convert",
+      "security_id": "sec-safe-001",
+      "date": "2024-06-01",
+      "trigger_id": "SAFE-1.TRIG",
+      "reason_text": "Qualified financing",
+      "quantity_converted": "1",
+      "resulting_security_ids": ["sec-stock-from-safe"]
+    },
+    {
+      "object_type": "TX_STOCK_ISSUANCE",
+      "id": "tx-stock-from-safe",
+      "security_id": "sec-stock-from-safe",
+      "date": "2024-06-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "CS-SAFE",
+      "stock_class_id": "sc-fixture-common",
+      "share_price": { "amount": "1.00", "currency": "USD" },
+      "quantity": "500000",
+      "cost_basis": { "amount": "0", "currency": "USD" },
+      "stock_legend_ids": ["legend-regs", "legend-contract"]
+    },
+    {
+      "object_type": "TX_WARRANT_EXERCISE",
+      "id": "tx-warrant-ex",
+      "security_id": "sec-warrant-001",
+      "date": "2024-07-01",
+      "trigger_id": "W-1.TRIG",
+      "resulting_security_ids": ["sec-stock-from-warrant"]
+    },
+    {
+      "object_type": "TX_STOCK_ISSUANCE",
+      "id": "tx-stock-from-warrant",
+      "security_id": "sec-stock-from-warrant",
+      "date": "2024-07-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "CS-W",
+      "stock_class_id": "sc-fixture-common",
+      "share_price": { "amount": "1.00", "currency": "USD" },
+      "quantity": "10000",
+      "cost_basis": { "amount": "0", "currency": "USD" },
+      "stock_legend_ids": ["legend-regs"]
+    }
+  ]
+}

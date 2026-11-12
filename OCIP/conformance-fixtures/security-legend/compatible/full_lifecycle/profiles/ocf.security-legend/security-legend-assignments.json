@@ -1,0 +1,26 @@
+{
+  "security_legend_assignments": [
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-safe-001",
+      "date": "2024-01-15",
+      "security_id": "sec-safe-001",
+      "legend_ids": ["legend-regs", "legend-contract"],
+      "comments": ["Category 3 Reg S SAFE legend at issuance"]
+    },
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-warrant-001",
+      "date": "2024-02-01",
+      "security_id": "sec-warrant-001",
+      "legend_ids": ["legend-regs"]
+    },
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-ec-001",
+      "date": "2024-03-01",
+      "security_id": "sec-ec-001",
+      "legend_ids": ["legend-rule-701"]
+    }
+  ]
+}

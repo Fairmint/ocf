@@ -1,0 +1,18 @@
+{
+  "security_legend_assignments": [
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-dup-a",
+      "date": "2024-01-15",
+      "security_id": "sec-safe-dup",
+      "legend_ids": ["legend-regs"]
+    },
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-dup-b",
+      "date": "2024-01-16",
+      "security_id": "sec-safe-dup",
+      "legend_ids": ["legend-contract"]
+    }
+  ]
+}

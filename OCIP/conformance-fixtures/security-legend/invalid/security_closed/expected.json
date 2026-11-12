@@ -1,0 +1,5 @@
+{
+  "overlays": ["with-profile", "invalid/security_closed"],
+  "error_codes": ["security_legend_security_closed"],
+  "exactly_one_error": true
+}

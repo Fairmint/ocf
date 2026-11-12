@@ -1,0 +1,23 @@
+{
+  "file_type": "OCF_STOCK_LEGEND_TEMPLATES_FILE",
+  "items": [
+    {
+      "object_type": "STOCK_LEGEND_TEMPLATE",
+      "id": "legend-regs",
+      "name": "Regulation S",
+      "text": "THE SECURITIES REPRESENTED HEREBY HAVE NOT BEEN REGISTERED UNDER THE SECURITIES ACT AND MAY NOT BE OFFERED, SOLD, PLEDGED OR OTHERWISE TRANSFERRED EXCEPT PURSUANT TO AN EFFECTIVE REGISTRATION STATEMENT OR AN APPLICABLE EXEMPTION."
+    },
+    {
+      "object_type": "STOCK_LEGEND_TEMPLATE",
+      "id": "legend-rule-701",
+      "name": "Rule 701",
+      "text": "THE SECURITIES WERE ISSUED PURSUANT TO RULE 701 AND ARE SUBJECT TO APPLICABLE RESTRICTIONS."
+    },
+    {
+      "object_type": "STOCK_LEGEND_TEMPLATE",
+      "id": "legend-contract",
+      "name": "Contractual",
+      "text": "TRANSFER RESTRICTED UNDER THE COMPANY'S STOCK PLAN AND SECURITIES PURCHASE AGREEMENT."
+    }
+  ]
+}

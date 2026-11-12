@@ -1,0 +1,5 @@
+{
+  "overlays": ["with-profile", "invalid/duplicate_assignment"],
+  "error_codes": ["security_legend_duplicate_assignment"],
+  "exactly_one_error": true
+}

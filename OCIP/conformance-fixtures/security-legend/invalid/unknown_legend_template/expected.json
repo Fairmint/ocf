@@ -1,0 +1,5 @@
+{
+  "overlays": ["with-profile", "invalid/unknown_legend_template"],
+  "error_codes": ["security_legend_unknown_legend_template"],
+  "exactly_one_error": true
+}

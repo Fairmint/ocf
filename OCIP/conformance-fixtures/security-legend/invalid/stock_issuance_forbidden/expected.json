@@ -1,0 +1,5 @@
+{
+  "overlays": ["with-profile", "invalid/stock_issuance_forbidden"],
+  "error_codes": ["security_legend_stock_issuance_forbidden"],
+  "exactly_one_error": true
+}
