@@ -1,0 +1,13 @@
+{
+  "file_type": "OCF_STAKEHOLDERS_FILE",
+  "items": [
+    {
+      "object_type": "STAKEHOLDER",
+      "id": "sh-fixture-001",
+      "name": { "legal_name": "Fixture Holder LLC" },
+      "stakeholder_type": "INSTITUTION",
+      "current_relationships": ["INVESTOR"],
+      "current_status": "ACTIVE"
+    }
+  ]
+}

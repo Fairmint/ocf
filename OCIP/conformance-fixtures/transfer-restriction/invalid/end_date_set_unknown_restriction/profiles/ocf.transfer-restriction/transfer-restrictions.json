@@ -1,0 +1,15 @@
+{
+  "transfer_restrictions": [],
+  "transfer_restriction_end_date_sets": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION_END_DATE_SET",
+      "id": "eds-1",
+      "date": "2026-06-15",
+      "restriction_id": "tr-missing",
+      "security_id": "sec-safe-001",
+      "end_date": "2027-06-15"
+    }
+  ],
+  "transfer_permitted": [],
+  "transfer_restriction_cancellations": []
+}

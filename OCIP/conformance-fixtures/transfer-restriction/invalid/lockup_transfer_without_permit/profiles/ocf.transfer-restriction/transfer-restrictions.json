@@ -1,0 +1,14 @@
+{
+  "transfer_restrictions": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-lock",
+      "security_id": "sec-sh-lock",
+      "date": "2026-03-01",
+      "restriction_type": "LOCKUP"
+    }
+  ],
+  "transfer_restriction_end_date_sets": [],
+  "transfer_permitted": [],
+  "transfer_restriction_cancellations": []
+}
