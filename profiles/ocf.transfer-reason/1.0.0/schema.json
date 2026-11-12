@@ -1,17 +1,17 @@
 {
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$schema": "http://json-schema.org/draft-07/schema",
   "$id": "https://opencaptablecoalition.com/profiles/ocf.transfer-reason/1.0.0/schema.json",
   "title": "OCF Transfer Reason Profile 1.0.0",
   "type": "object",
   "properties": {
     "transfer_reasons": {
       "type": "array",
-      "items": { "$ref": "#/$defs/TransferReason" }
+      "items": { "$ref": "#/definitions/TransferReason" }
     }
   },
   "required": ["transfer_reasons"],
   "additionalProperties": false,
-  "$defs": {
+  "definitions": {
     "TransferReason": {
       "type": "object",
       "properties": {

@@ -1,0 +1,11 @@
+{
+  "description": "OCF-only replay fingerprint; profile files must not change these values",
+  "issuer_id": "fixture-issuer-001",
+  "stock_transfers": [
+    {
+      "id": "tx-transfer-fixture-001",
+      "object_type": "TX_STOCK_TRANSFER",
+      "quantity": "100"
+    }
+  ]
+}

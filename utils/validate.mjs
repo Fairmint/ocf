@@ -11,6 +11,11 @@ import { resolve } from "path";
 // For GitHub actions integrations
 // TODO - move action integrations into a separate file to keep validator utils clean
 import core from "@actions/core";
+import {
+  validatePackageExtensions,
+  buildOcfObjectIndex,
+} from "./validate-extensions.mjs";
+import { resolveOcfSchemaBundle } from "./ocf-version.mjs";
 
 // build map of object_type to schema $id
 // throws if an unknown object_type value is encountered
@@ -142,7 +147,7 @@ async function getSchemaFilepaths(verbose = false) {
   return paths;
 }
 
-async function getOcfFilesFromDir(path, verbose = false) {
+export async function getOcfFilesFromDir(path, verbose = false) {
   /**
    * Crawl a provided directory and fetch paths to files
    * ending in .ocf.json
@@ -204,9 +209,12 @@ export async function validateOcfDirectory(
     );
 
     if (verbose) console.log("\n--- Validate OCF Files ---------------");
+    let manifestObj = null;
+    const parsedOcfByPath = {};
     for (let i = 0; i < ocf_file_buffers.length; i++) {
       if (verbose) console.log(`\n${i + 1})\tAnalyze File: ${ocf_paths[i]}`);
       const obj = JSON.parse(ocf_file_buffers[i].toString());
+      parsedOcfByPath[ocf_paths[i]] = obj;
       if (verbose) {
         console.log(`\tOCF File Type: ${obj.file_type}`);
         console.log(`\tFile Type URI: ${uriLookupForFileType[obj.file_type]}`);
@@ -214,6 +222,20 @@ export async function validateOcfDirectory(
 
       // if file is manifest, just validate against the manifest schema
       if (obj.file_type === "OCF_MANIFEST_FILE") {
+        const ocfBundle = resolveOcfSchemaBundle(obj.ocf_version);
+        if (!ocfBundle.ok) {
+          if (verbose) {
+            console.log(`\n\tXX UNSUPPORTED ocf_version: ${obj.ocf_version}`);
+            console.log(`\t${ocfBundle.message}`);
+          }
+          if (test) {
+            core.setFailed(`Unsupported ocf_version: ${obj.ocf_version}`);
+          }
+          return false;
+        }
+        if (verbose && ocfBundle.loadFromRelease) {
+          console.log(`\t${ocfBundle.message}`);
+        }
         const validator = ajv.getSchema(uriLookupForFileType[obj.file_type]);
         const valid = validator(obj);
 
@@ -229,6 +251,7 @@ export async function validateOcfDirectory(
           return false;
         } else {
           if (verbose) console.log(`\t** VALID OCF **`);
+          manifestObj = obj;
         }
         // collect the errors per file and then return them
         // if file is not a manifest, loop through items
@@ -260,7 +283,43 @@ export async function validateOcfDirectory(
         if (verbose) console.log("\t** VALID OCF **");
       }
     }
-    console.log("\n\t** ALL FILES VALID OCF **");
+
+    if (manifestObj) {
+      if (verbose) {
+        console.log(
+          "\n--- Validate package extensions (OCIP-0001) ---------------"
+        );
+      }
+      const extensionResult = await validatePackageExtensions(
+        manifestObj,
+        path,
+        {
+          mode: "standard",
+          verbose,
+          ajv,
+          ocfObjectIndex: buildOcfObjectIndex(parsedOcfByPath),
+        }
+      );
+      const extensionErrors = extensionResult.issues.filter(
+        (issue) => issue.level === "error"
+      );
+      if (extensionErrors.length > 0) {
+        if (verbose) {
+          console.log("\n\tXX PACKAGE EXTENSION VALIDATION ERRORS:");
+          for (const issue of extensionErrors) {
+            console.log(`\t- [${issue.code}] ${issue.message}`);
+          }
+        }
+        if (test) {
+          core.setFailed("OCF package extension validation failed");
+        }
+        return false;
+      }
+    }
+
+    if (verbose) {
+      console.log("\n\t** ALL FILES VALID OCF **");
+    }
     return true;
   } catch (e) {
     if (test) {
@@ -430,7 +489,13 @@ export async function validateOcfFileAtPath(
     const ocf_instance = JSON.parse(ocf_instance_str);
     if (verbose)
       console.log("\n\n--- OCF Instance ---------------\n", ocf_instance);
-    await ValidateOcfFile(ocf_instance, verbose, test, show_all_errors);
+    const ok = await ValidateOcfFile(
+      ocf_instance,
+      verbose,
+      test,
+      show_all_errors
+    );
+    return ok;
   } catch (e) {
     if (test) {
       core.setFailed(`\t\tFailed to validate OCF file at path: ${e.message}`);
