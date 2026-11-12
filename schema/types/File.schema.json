@@ -12,6 +12,10 @@
     "md5": {
       "description": "MD5 file checksum",
       "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Md5.schema.json"
+    },
+    "sha256": {
+      "description": "Optional SHA-256 file checksum (recommended for new packages; md5 remains required for compatibility)",
+      "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Sha256.schema.json"
     }
   },
   "additionalProperties": false,

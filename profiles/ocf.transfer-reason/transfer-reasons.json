@@ -1,0 +1,21 @@
+{
+  "transfer_reasons": [
+    {
+      "id": "tr-001",
+      "target": {
+        "object_type": "TX_STOCK_TRANSFER",
+        "object_id": "tx-transfer-001"
+      },
+      "reason": "SALE"
+    },
+    {
+      "id": "tr-002",
+      "target": {
+        "object_type": "TX_STOCK_TRANSFER",
+        "object_id": "tx-transfer-002"
+      },
+      "reason": "GIFT",
+      "reason_text": "Gift to family member; no consideration."
+    }
+  ]
+}

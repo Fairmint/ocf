@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://opencaptablecoalition.com/profiles/ocf.fixtures.economic-heuristic/1.0.0/schema.json",
+  "title": "OCF Fixture Profile (§5 economic heuristic)",
+  "description": "Conformance-test-only. Not for production packages. Payload is valid JSON Schema but includes property names that trigger the advisory profile_economic_violation heuristic.",
+  "type": "object",
+  "properties": {
+    "heuristic_records": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/HeuristicRecord" }
+    }
+  },
+  "required": ["heuristic_records"],
+  "additionalProperties": false,
+  "definitions": {
+    "HeuristicRecord": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "quantity": {
+          "type": "string",
+          "description": "Test-only field name; triggers §5 cap-table-field advisory heuristic."
+        }
+      },
+      "required": ["id", "quantity"],
+      "additionalProperties": false
+    }
+  }
+}

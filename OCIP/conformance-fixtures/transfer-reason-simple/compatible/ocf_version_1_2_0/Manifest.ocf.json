@@ -1,0 +1,57 @@
+{
+  "ocf_version": "1.2.0",
+  "file_type": "OCF_MANIFEST_FILE",
+  "issuer": {
+    "object_type": "ISSUER",
+    "id": "fixture-issuer-001",
+    "legal_name": "Fixture Co",
+    "formation_date": "2020-01-01",
+    "country_of_formation": "US",
+    "tax_ids": [],
+    "comments": []
+  },
+  "as_of": "2024-06-01",
+  "generated_at": "2024-06-01T12:00:00Z",
+  "stakeholders_files": [
+    {
+      "filepath": "Stakeholders.ocf.json",
+      "md5": "8513015c37aa75f55e098a66b6577a3d"
+    }
+  ],
+  "stock_classes_files": [
+    {
+      "filepath": "StockClasses.ocf.json",
+      "md5": "a51d83eb56512dc7ac867748c7b61489"
+    }
+  ],
+  "stock_plans_files": [
+    {
+      "filepath": "StockPlans.ocf.json",
+      "md5": "9ac038ef05ba2bbaaee3a22ff743fa27"
+    }
+  ],
+  "stock_legend_templates_files": [
+    {
+      "filepath": "StockLegends.ocf.json",
+      "md5": "931d44dbd132cc09aef64ae4bab61987"
+    }
+  ],
+  "vesting_terms_files": [
+    {
+      "filepath": "VestingTerms.ocf.json",
+      "md5": "45aac6b4319a6445fb0bffce6276f15e"
+    }
+  ],
+  "valuations_files": [
+    {
+      "filepath": "Valuations.ocf.json",
+      "md5": "2a284a50fed8a0d07f10ed36edb14fc5"
+    }
+  ],
+  "transactions_files": [
+    {
+      "filepath": "Transactions.ocf.json",
+      "md5": "fad7bf9ea26f618fe681ff5cbbce2d24"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "transfer_reasons": [
+    {
+      "id": "tr-fixture-bad",
+      "target": {
+        "object_type": "TX_STOCK_TRANSFER",
+        "object_id": "tx-does-not-exist"
+      },
+      "reason": "OTHER"
+    }
+  ]
+}

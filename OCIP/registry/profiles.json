@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "profiles": [
+    {
+      "id": "ocf.transfer-reason",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Transfer reason",
+      "description": "Structured reason for a stock transfer, annotating an existing TX_STOCK_TRANSFER.",
+      "schema": "profiles/ocf.transfer-reason/1.0.0/schema.json",
+      "spec": "https://github.com/Open-Cap-Table-Coalition/Technical-Working-Group/blob/main/OCIP/proposals/0001-ocf-extension-architecture.md",
+      "requires_ocf": ">=1.3.0",
+      "min_ocf_version": "1.3.0",
+      "requires_profiles": [],
+      "owner": "coalition",
+      "created": "2026-09-22",
+      "superseded_by": null
+    },
+    {
+      "id": "ocf.fixtures.requires-transfer-reason",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Fixture profile with dependency",
+      "description": "Conformance-fixture-only profile that requires ocf.transfer-reason.",
+      "schema": "profiles/ocf.fixtures.requires-transfer-reason/1.0.0/schema.json",
+      "spec": "https://github.com/Open-Cap-Table-Coalition/Technical-Working-Group/blob/main/OCIP/proposals/0001-ocf-extension-architecture.md",
+      "requires_ocf": ">=1.3.0",
+      "min_ocf_version": "1.3.0",
+      "requires_profiles": [
+        { "id": "ocf.transfer-reason", "version": ">=1.0.0 <2.0.0" }
+      ],
+      "owner": "coalition",
+      "created": "2026-11-09",
+      "superseded_by": null
+    },
+    {
+      "id": "ocf.fixtures.economic-heuristic",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Fixture profile (§5 economic heuristic)",
+      "description": "Conformance-fixture-only. Schema-valid payload that triggers profile_economic_violation advisory.",
+      "schema": "profiles/ocf.fixtures.economic-heuristic/1.0.0/schema.json",
+      "spec": "https://github.com/Open-Cap-Table-Coalition/Technical-Working-Group/blob/main/OCIP/proposals/0001-ocf-extension-architecture.md",
+      "requires_ocf": ">=1.3.0",
+      "min_ocf_version": "1.3.0",
+      "requires_profiles": [],
+      "owner": "coalition",
+      "created": "2026-11-09",
+      "superseded_by": null
+    }
+  ]
+}
