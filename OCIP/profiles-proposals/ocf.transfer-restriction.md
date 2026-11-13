@@ -2,7 +2,7 @@
 
 **Status:** Draft (Fairmint internal; stacks on
 [OCIP-0001](../proposals/0001-ocf-extension-architecture.md) PR #15)  
-**Author:** Fairmint (Thibauld Fayolle)  
+**Author:** Fairmint (Thibauld Favre)  
 **Legal source:** Gary Lin's 2026-11-11 internal Regulation S analysis (not a formal opinion),
 citing Rules 903(b)(3)(iii)(B)(4), 902(f), 903(b)(5), 904, and 905; OCP §11.6 (legends vs
 transfer-agent enforcement).
