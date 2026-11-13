@@ -1,7 +1,7 @@
 # Coalition profile proposal: `ocf.stock-hold` 1.0.0
 
 **Status:** Draft for OCF TWG (Nov 12, 2026)  
-**Author:** Fairmint (Thibauld Fayolle)  
+**Author:** Fairmint (Thibauld Favre)  
 **Related:** [OCIP-0001](../proposals/0001-ocf-extension-architecture.md),
 [OCF-Composed-Schemas#300](https://github.com/Open-Cap-Table-Coalition/OCF-Composed-Schemas/issues/300)
 (transfer correlation)
