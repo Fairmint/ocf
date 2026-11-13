@@ -32,6 +32,7 @@ if (manifest) {
   extension = await validatePackageExtensions(manifest, path, {
     ajv,
     ocfObjectIndex: buildOcfObjectIndex(parsed),
+    ocfParsedByPath: parsed,
     mode: process.argv[3] ?? "standard",
     verbose: false,
   });

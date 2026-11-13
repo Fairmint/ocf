@@ -10,6 +10,7 @@ import {
   compareOcfSemverCore,
   resolveOcfSchemaBundle,
 } from "./ocf-version.mjs";
+import { validateTransferRestrictionProfileSemantics } from "./validate-profile-transfer-restriction.mjs";
 
 const REGISTRY_PATH = "./OCIP/registry/profiles.json";
 
@@ -172,6 +173,34 @@ function walkObjectReferences(node, refs = []) {
   return refs;
 }
 
+function collectOcfTransactionItems(ocfParsedByPath = {}) {
+  const items = [];
+  for (const obj of Object.values(ocfParsedByPath)) {
+    if (
+      obj?.file_type === "OCF_TRANSACTIONS_FILE" &&
+      Array.isArray(obj.items)
+    ) {
+      items.push(...obj.items);
+    }
+  }
+  return items;
+}
+
+function transferRestrictionEconomicPathExempt(path) {
+  return (
+    /^transfer_restrictions(\[\d+\])?\.(security_id|end_date)$/.test(path) ||
+    /^transfer_restriction_end_date_sets(\[\d+\])?\.(security_id|restriction_id|end_date)$/.test(
+      path
+    ) ||
+    /^transfer_permitted(\[\d+\])?\.(security_id|restriction_id|transfer_id)$/.test(
+      path
+    ) ||
+    /^transfer_restriction_cancellations(\[\d+\])?\.(security_id|restriction_id)$/.test(
+      path
+    )
+  );
+}
+
 function findEconomicFieldViolations(node, path = "", hits = []) {
   if (!node || typeof node !== "object") {
     return hits;
@@ -238,7 +267,7 @@ async function listUndeclaredProfileFiles(packageRoot, declaredPaths) {
 /**
  * @param {object} manifest
  * @param {string} packageRoot
- * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string> }} options
+ * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string>, ocfParsedByPath?: Record<string, object> }} options
  */
 export async function validatePackageExtensions(
   manifest,
@@ -250,7 +279,9 @@ export async function validatePackageExtensions(
     verbose = false,
     ajv: sharedAjv,
     ocfObjectIndex = new Set(),
+    ocfParsedByPath = {},
   } = options;
+  const ocfTransactions = collectOcfTransactionItems(ocfParsedByPath);
 
   /** @type {ExtensionIssue[]} */
   const issues = [];
@@ -600,10 +631,24 @@ export async function validatePackageExtensions(
 
       const economicHits = findEconomicFieldViolations(payload);
       for (const hit of economicHits) {
+        if (
+          decl.id === "ocf.transfer-restriction" &&
+          transferRestrictionEconomicPathExempt(hit)
+        ) {
+          continue;
+        }
         push(
           "warning",
           C.PROFILE_ECONOMIC_VIOLATION,
           `Profile ${decl.id} file ${file.filepath} may contain cap-table field at ${hit} (advisory; see §5)`
+        );
+      }
+
+      if (decl.id === "ocf.transfer-restriction") {
+        validateTransferRestrictionProfileSemantics(
+          payload,
+          ocfTransactions,
+          push
         );
       }
 

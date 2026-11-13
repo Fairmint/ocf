@@ -34,6 +34,21 @@
       "superseded_by": null
     },
     {
+      "id": "ocf.transfer-restriction",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Transfer restriction (Regulation S period, lockups)",
+      "description": "Dated transfer restrictions on issued securities; TransferPermitted records lawful transfers while open.",
+      "schema": "profiles/ocf.transfer-restriction/1.0.0/schema.json",
+      "spec": "profiles-proposals/ocf.transfer-restriction.md",
+      "requires_ocf": ">=1.3.0",
+      "min_ocf_version": "1.3.0",
+      "requires_profiles": [],
+      "owner": "fairmint",
+      "created": "2026-11-12",
+      "superseded_by": null
+    },
+    {
       "id": "ocf.fixtures.economic-heuristic",
       "version": "1.0.0",
       "status": "draft",

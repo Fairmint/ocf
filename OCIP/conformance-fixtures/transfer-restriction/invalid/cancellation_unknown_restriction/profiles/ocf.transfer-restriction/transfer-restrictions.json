@@ -1,0 +1,15 @@
+{
+  "transfer_restrictions": [],
+  "transfer_restriction_end_date_sets": [],
+  "transfer_permitted": [],
+  "transfer_restriction_cancellations": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION_CANCELLATION",
+      "id": "c-1",
+      "date": "2026-04-01",
+      "restriction_id": "tr-missing",
+      "security_id": "sec-safe-001",
+      "reason_text": "nope"
+    }
+  ]
+}

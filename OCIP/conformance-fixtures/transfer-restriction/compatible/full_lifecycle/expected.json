@@ -1,0 +1,3 @@
+{
+  "overlays": ["with-profile", "compatible/full_lifecycle"]
+}
