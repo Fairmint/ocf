@@ -1,0 +1,13 @@
+{
+  "stock_holds": [],
+  "stock_hold_cancellations": [
+    {
+      "object_type": "TX_STOCK_HOLD_CANCELLATION",
+      "id": "cancel-orphan",
+      "date": "2024-03-01",
+      "hold_id": "missing-hold",
+      "security_id": "sec-sh-001",
+      "reason_text": "No matching hold"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "stock_holds": [
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-stop-bad",
+      "security_id": "sec-sh-001",
+      "date": "2024-02-01",
+      "hold_type": "STOP_TRANSFER",
+      "reference": "ORD-9",
+      "reason_text": "Stop with illegal quantity",
+      "quantity": "1"
+    }
+  ],
+  "stock_hold_cancellations": []
+}

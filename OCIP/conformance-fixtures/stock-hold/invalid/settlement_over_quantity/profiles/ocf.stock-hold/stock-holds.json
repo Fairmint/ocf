@@ -1,0 +1,25 @@
+{
+  "stock_holds": [
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-s1",
+      "security_id": "sec-sh-001",
+      "date": "2024-02-01",
+      "hold_type": "REGISTER_SETTLEMENT",
+      "reference": "S1",
+      "reason_text": "First",
+      "quantity": "120"
+    },
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-s2",
+      "security_id": "sec-sh-001",
+      "date": "2024-02-02",
+      "hold_type": "REGISTER_SETTLEMENT",
+      "reference": "S2",
+      "reason_text": "Second",
+      "quantity": "100"
+    }
+  ],
+  "stock_hold_cancellations": []
+}
