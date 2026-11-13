@@ -71,6 +71,7 @@ async function extensionIssuesForPackage(packageRoot) {
   const result = await validatePackageExtensions(manifest, packageRoot, {
     ajv,
     ocfObjectIndex: buildOcfObjectIndex(parsed),
+    ocfParsedByPath: parsed,
     mode: "standard",
   });
   return {

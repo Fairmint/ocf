@@ -1,0 +1,19 @@
+{
+  "file_type": "OCF_TRANSACTIONS_FILE",
+  "items": [
+    {
+      "object_type": "TX_STOCK_ISSUANCE",
+      "id": "tx-stock-for-rule5",
+      "security_id": "sec-stock-only",
+      "date": "2024-01-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "CS-1",
+      "stock_class_id": "sc-fixture-common",
+      "share_price": { "amount": "1.00", "currency": "USD" },
+      "quantity": "100",
+      "cost_basis": { "amount": "0", "currency": "USD" },
+      "stock_legend_ids": ["legend-regs"]
+    }
+  ]
+}

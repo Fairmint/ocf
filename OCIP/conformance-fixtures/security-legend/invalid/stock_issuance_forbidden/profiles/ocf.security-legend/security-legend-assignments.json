@@ -1,0 +1,11 @@
+{
+  "security_legend_assignments": [
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-stock",
+      "date": "2024-01-01",
+      "security_id": "sec-stock-only",
+      "legend_ids": ["legend-regs"]
+    }
+  ]
+}

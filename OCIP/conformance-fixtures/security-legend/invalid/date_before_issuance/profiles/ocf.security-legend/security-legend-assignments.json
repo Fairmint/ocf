@@ -1,0 +1,11 @@
+{
+  "security_legend_assignments": [
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-early",
+      "date": "2024-02-01",
+      "security_id": "sec-safe-early",
+      "legend_ids": ["legend-regs"]
+    }
+  ]
+}

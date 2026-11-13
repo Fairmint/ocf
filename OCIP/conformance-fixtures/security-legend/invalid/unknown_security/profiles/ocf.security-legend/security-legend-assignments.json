@@ -1,0 +1,11 @@
+{
+  "security_legend_assignments": [
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-bad",
+      "date": "2024-02-01",
+      "security_id": "sec-never-issued",
+      "legend_ids": ["legend-regs"]
+    }
+  ]
+}

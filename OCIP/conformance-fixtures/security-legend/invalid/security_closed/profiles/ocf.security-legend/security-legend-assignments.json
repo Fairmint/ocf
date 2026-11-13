@@ -1,0 +1,11 @@
+{
+  "security_legend_assignments": [
+    {
+      "object_type": "SECURITY_LEGEND_ASSIGNMENT",
+      "id": "sla-after-close",
+      "date": "2024-03-01",
+      "security_id": "sec-safe-closed",
+      "legend_ids": ["legend-regs"]
+    }
+  ]
+}
