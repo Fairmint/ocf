@@ -1,7 +1,7 @@
 # Coalition profile proposal: `ocf.security-legend` 1.0.0
 
 **Status:** Draft (Fairmint internal)  
-**Author:** Fairmint (Thibauld Fayolle, CTO — approved sketch for implementation)  
+**Author:** Fairmint (Thibauld Favre, CTO — approved sketch for implementation)  
 **Legal review:** Gary Cox (securities counsel), 2026-11-11 internal analysis (not a formal
 opinion)  
 **Related:** [OCIP-0001](../proposals/0001-ocf-extension-architecture.md),
