@@ -298,6 +298,7 @@ export async function validateOcfDirectory(
           verbose,
           ajv,
           ocfObjectIndex: buildOcfObjectIndex(parsedOcfByPath),
+          ocfParsedByPath: parsedOcfByPath,
         }
       );
       const extensionErrors = extensionResult.issues.filter(

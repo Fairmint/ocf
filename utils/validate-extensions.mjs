@@ -10,6 +10,7 @@ import {
   compareOcfSemverCore,
   resolveOcfSchemaBundle,
 } from "./ocf-version.mjs";
+import { validateStockHoldProfileSemantics } from "./validate-profile-stock-hold.mjs";
 
 const REGISTRY_PATH = "./OCIP/registry/profiles.json";
 
@@ -172,6 +173,19 @@ function walkObjectReferences(node, refs = []) {
   return refs;
 }
 
+function collectOcfTransactionItems(ocfParsedByPath = {}) {
+  const items = [];
+  for (const obj of Object.values(ocfParsedByPath)) {
+    if (
+      obj?.file_type === "OCF_TRANSACTIONS_FILE" &&
+      Array.isArray(obj.items)
+    ) {
+      items.push(...obj.items);
+    }
+  }
+  return items;
+}
+
 function findEconomicFieldViolations(node, path = "", hits = []) {
   if (!node || typeof node !== "object") {
     return hits;
@@ -238,7 +252,7 @@ async function listUndeclaredProfileFiles(packageRoot, declaredPaths) {
 /**
  * @param {object} manifest
  * @param {string} packageRoot
- * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string> }} options
+ * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string>, ocfParsedByPath?: Record<string, object> }} options
  */
 export async function validatePackageExtensions(
   manifest,
@@ -250,7 +264,9 @@ export async function validatePackageExtensions(
     verbose = false,
     ajv: sharedAjv,
     ocfObjectIndex = new Set(),
+    ocfParsedByPath = {},
   } = options;
+  const ocfTransactions = collectOcfTransactionItems(ocfParsedByPath);
 
   /** @type {ExtensionIssue[]} */
   const issues = [];
@@ -600,11 +616,25 @@ export async function validatePackageExtensions(
 
       const economicHits = findEconomicFieldViolations(payload);
       for (const hit of economicHits) {
+        if (
+          decl.id === "ocf.stock-hold" &&
+          (/^stock_holds(\[\d+\])?\.quantity$/.test(hit) ||
+            /^stock_holds(\[\d+\])?\.security_id$/.test(hit) ||
+            /^stock_hold_cancellations(\[\d+\])?\.(security_id|hold_id)$/.test(
+              hit
+            ))
+        ) {
+          continue;
+        }
         push(
           "warning",
           C.PROFILE_ECONOMIC_VIOLATION,
           `Profile ${decl.id} file ${file.filepath} may contain cap-table field at ${hit} (advisory; see §5)`
         );
+      }
+
+      if (decl.id === "ocf.stock-hold") {
+        validateStockHoldProfileSemantics(payload, ocfTransactions, push);
       }
 
       const refs = walkObjectReferences(payload);

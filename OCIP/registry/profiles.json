@@ -34,6 +34,21 @@
       "superseded_by": null
     },
     {
+      "id": "ocf.stock-hold",
+      "version": "1.0.0",
+      "status": "draft",
+      "title": "Stock hold (stop-transfer and settlement)",
+      "description": "Annotates stop-transfer and register/settlement holds on stock securities without changing ownership.",
+      "schema": "profiles/ocf.stock-hold/1.0.0/schema.json",
+      "spec": "profiles-proposals/ocf.stock-hold.md",
+      "requires_ocf": ">=1.3.0",
+      "min_ocf_version": "1.3.0",
+      "requires_profiles": [],
+      "owner": "fairmint",
+      "created": "2026-11-10",
+      "superseded_by": null
+    },
+    {
       "id": "ocf.fixtures.economic-heuristic",
       "version": "1.0.0",
       "status": "draft",
