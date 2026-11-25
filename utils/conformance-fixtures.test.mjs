@@ -6,7 +6,9 @@ import {
   getOcfValidator,
   getOcfFilesFromDir,
   validateOcfDirectory,
+  clearOcfValidatorCache,
 } from "./validate.mjs";
+import { CURRENT_SCHEMA_ROOT, resolveOcfSchemaBundle } from "./ocf-version.mjs";
 import {
   buildOcfObjectIndex,
   validatePackageExtensions,
@@ -23,6 +25,7 @@ const FIXTURE_ROOT = resolve(
 const materializedDirs = [];
 
 afterEach(() => {
+  clearOcfValidatorCache();
   for (const dir of materializedDirs.splice(0)) {
     removeMaterializedPackage(dir);
   }
@@ -59,7 +62,6 @@ function extractCapTableSnapshot(packageRoot) {
 }
 
 async function extensionIssuesForPackage(packageRoot) {
-  const ajv = await getOcfValidator(false, false, false, false);
   const paths = await getOcfFilesFromDir(packageRoot);
   const parsed = {};
   for (const p of paths) {
@@ -68,6 +70,12 @@ async function extensionIssuesForPackage(packageRoot) {
   const manifest = Object.values(parsed).find(
     (o) => o.file_type === "OCF_MANIFEST_FILE"
   );
+  const bundle = manifest
+    ? resolveOcfSchemaBundle(manifest.ocf_version)
+    : { ok: true, schemaRoot: CURRENT_SCHEMA_ROOT };
+  const schemaRoot =
+    bundle.ok && bundle.schemaRoot ? bundle.schemaRoot : CURRENT_SCHEMA_ROOT;
+  const ajv = await getOcfValidator(false, false, false, false, schemaRoot);
   const result = await validatePackageExtensions(manifest, packageRoot, {
     ajv,
     ocfObjectIndex: buildOcfObjectIndex(parsed),
@@ -135,8 +143,11 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
       const pkg = materialize(...overlayStack);
       const ok = await validateOcfDirectory(pkg, false, false);
       expect(ok).toBe(true);
-      const { errors } = await extensionIssuesForPackage(pkg);
+      const { errors, warnings } = await extensionIssuesForPackage(pkg);
       expect(errors).toEqual([]);
+      for (const code of expected.warning_codes ?? []) {
+        expect(warnings).toContain(code);
+      }
     }
   );
 
@@ -167,6 +178,11 @@ describe("OCIP-0001 transfer-reason-simple conformance fixtures", () => {
       );
       const overlayStack = expected.overlays ?? ["with-profiles", overlayPath];
       const pkg = materialize(...overlayStack);
+      if (expected.ocf_directory_valid === false) {
+        const ok = await validateOcfDirectory(pkg, false, false);
+        expect(ok).toBe(false);
+        return;
+      }
       const { errors } = await extensionIssuesForPackage(pkg);
       for (const code of expected.error_codes ?? []) {
         expect(errors).toContain(code);

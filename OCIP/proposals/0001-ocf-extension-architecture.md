@@ -132,14 +132,12 @@ the **minor version the manifest declares**, not against the latest 1.x bundle w
 1.x minors are additive and optional-only relative to earlier minors in the same major line. When a
 reference build does not embed an older minor's bundle, it **MUST** load that minor's published
 schema release (for example git tag `v1.2.0`) instead of silently substituting a newer minor. This
-repository ships one in-tree 1.3 bundle and documents the resolution hook in
-`utils/ocf-version.mjs`. **The reference validator in this repository always uses that in-repo
-tree** (`getOcfValidator()`), including for manifests such as `1.2.0`; it does not fetch older
-releases over the network. True per-minor validation requires loading the schema tree for the
-declared minor (git tag, npm artifact, or vendored `schema-releases/v1.2.0/`) into a dedicated AJV
-instance. **This PR does not ship those vendored bundles**; that implementation is a stacked
-follow-on change (vendored `schema-releases/v1.2/`, per-minor AJV roots, and explicit fallback
-warnings).
+repository ships the current tree at `./schema/` and vendored read-only bundles under
+`schema-releases/` (for example `schema-releases/v1.2/` from tag `v1.2.0`).
+`resolveOcfSchemaBundle()` in `utils/ocf-version.mjs` selects the schema root; `getOcfValidator()`
+caches one AJV instance per root. Declared **1.3** uses `./schema/` unchanged; declared **1.2** uses
+the vendored 1.2 tree; older minors without a vendored bundle validate against `./schema/` with
+warning `ocf_version_schema_fallback`. Network fetch is not used.
 
 **Profile minimum OCF version.** Each registry row carries `min_ocf_version` (a concrete
 `MAJOR.MINOR.PATCH`) for the lowest OCF schema release that profile requires. If the package's
@@ -507,6 +505,7 @@ The OCF validator operates in three modes:
 | SHA-256 on a manifest file entry does not match file on disk (when `sha256` is present; MD5 is not checked)                                           | Error   | **Error**    | Error    |
 | `ocf_version` names an unsupported major (not 1.x)                                                                                                    | Error   | **Error**    | Error    |
 | Declared profile `min_ocf_version` exceeds package `ocf_version`                                                                                      | Error   | **Error**    | Error    |
+| Declared OCF minor has no vendored bundle; validator used current in-repo schemas instead                                                             | Warning | **Warning**  | Warning  |
 
 ¹ In strict mode, `rejected` is an error; `draft`, `review`, `deprecated`, and `superseded` stay
 warnings. Unknown ids are covered by the first row. Namespace violation takes precedence over
@@ -540,6 +539,7 @@ and CI use these codes (not free-text messages):
 | `package_file_md5_mismatch`        | Manifest `md5` does not match the file (entry has no `sha256`)                           |
 | `package_file_sha256_mismatch`     | Manifest `sha256` does not match the file (`sha256` present; MD5 not verified)           |
 | `ocf_version_unsupported`          | Package `ocf_version` is not a supported 1.x release                                     |
+| `ocf_version_schema_fallback`      | No vendored bundle for declared minor; validated with in-repo current schemas            |
 | `profile_ocf_version_unsupported`  | Profile `min_ocf_version` exceeds package `ocf_version`                                  |
 
 **Standard mode is the default.** It is the mode the coalition's reference validator should ship in.

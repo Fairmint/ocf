@@ -1,8 +1,23 @@
-/**
- * OCF package `ocf_version` resolution (OCIP-0001 §2.2).
- * @readonly
- */
+import fs from "fs";
+import { resolve } from "path";
+import { fileURLToPath } from "url";
+import { EXTENSION_ERROR_CODES as C } from "./extension-error-codes.mjs";
+
+const REPO_ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..");
+
+/** @readonly */
 export const IMPLEMENTED_OCF_VERSION = "1.3.0-alpha+main";
+
+/** @readonly */
+export const CURRENT_SCHEMA_ROOT = resolve(REPO_ROOT, "schema");
+
+/** @readonly */
+export const VENDORED_SCHEMA_RELEASES = {
+  2: {
+    schemaRoot: resolve(REPO_ROOT, "schema-releases/v1.2"),
+    sourceTag: "v1.2.0",
+  },
+};
 
 /**
  * @param {string} version
@@ -23,7 +38,7 @@ export function parseOcfSemverCore(version) {
 /**
  * @param {string} a
  * @param {string} b
- * @returns {number} negative if a < b, positive if a > b, 0 if equal
+ * @returns {number}
  */
 export function compareOcfSemverCore(a, b) {
   const av = parseOcfSemverCore(a);
@@ -41,14 +56,24 @@ export function compareOcfSemverCore(a, b) {
 }
 
 /**
- * Which OCF JSON Schema bundle to use for validating a package.
- * **This repository ships one bundle** (the current 1.3 tree under `./schema/`).
- * `getOcfValidator()` always uses that tree today—even when the manifest says `1.2.0`.
- * Normative requirement: validate against the declared minor's bundle. To do that here,
- * load schemas from a vendored path or release tag (e.g. `schema-releases/v1.2.0/`) and
- * call `getOcfValidator` with that tree; network fetch is not implemented in this hook.
+ * @typedef {{
+ *   ok: boolean,
+ *   reason?: string,
+ *   message?: string,
+ *   declaredMinor?: number,
+ *   implementedMinor?: number,
+ *   schemaRoot?: string,
+ *   bundle?: "current" | "vendored" | "fallback",
+ *   sourceTag?: string | null,
+ *   fallback?: boolean
+ * }} OcfSchemaBundleResolution
+ */
+
+/**
+ * Resolve the on-disk JSON Schema root for a package `ocf_version`.
  *
- * @param {string} ocfVersion manifest `ocf_version`
+ * @param {string} ocfVersion
+ * @returns {OcfSchemaBundleResolution}
  */
 export function resolveOcfSchemaBundle(ocfVersion) {
   const declared = parseOcfSemverCore(ocfVersion);
@@ -71,19 +96,45 @@ export function resolveOcfSchemaBundle(ocfVersion) {
     return {
       ok: false,
       reason: "newer_minor_than_implemented",
-      message: `Package declares OCF ${declared.minor}.${declared.patch} but validator implements up to ${implemented.minor}.x (${IMPLEMENTED_OCF_VERSION})`,
+      message: `Package declares OCF 1.${declared.minor}.x but validator implements up to 1.${implemented.minor}.x (${IMPLEMENTED_OCF_VERSION})`,
     };
   }
-  const loadFromRelease =
-    declared.minor < implemented.minor ? `v1.${declared.minor}.0` : null;
+
+  if (declared.minor === implemented.minor) {
+    return {
+      ok: true,
+      declaredMinor: declared.minor,
+      implementedMinor: implemented.minor,
+      schemaRoot: CURRENT_SCHEMA_ROOT,
+      bundle: "current",
+      sourceTag: null,
+      fallback: false,
+      message: `Using in-repo schema bundle for OCF 1.${implemented.minor}.x`,
+    };
+  }
+
+  const vendored = VENDORED_SCHEMA_RELEASES[declared.minor];
+  if (vendored && fs.existsSync(vendored.schemaRoot)) {
+    return {
+      ok: true,
+      declaredMinor: declared.minor,
+      implementedMinor: implemented.minor,
+      schemaRoot: vendored.schemaRoot,
+      bundle: "vendored",
+      sourceTag: vendored.sourceTag,
+      fallback: false,
+      message: `Using vendored OCF 1.${declared.minor}.x schemas from tag ${vendored.sourceTag}`,
+    };
+  }
+
   return {
     ok: true,
     declaredMinor: declared.minor,
     implementedMinor: implemented.minor,
-    bundle: "local",
-    loadFromRelease,
-    message: loadFromRelease
-      ? `Declared OCF 1.${declared.minor}.x: load schema bundle from published release ${loadFromRelease}; this reference build validates with in-repo schemas when declared minor <= ${implemented.minor}.`
-      : `Declared OCF matches in-repo bundle minor ${implemented.minor}.`,
+    schemaRoot: CURRENT_SCHEMA_ROOT,
+    bundle: "fallback",
+    sourceTag: null,
+    fallback: true,
+    message: `No vendored schema bundle for OCF 1.${declared.minor}.x; validating against in-repo 1.${implemented.minor}.x schemas (${C.OCF_VERSION_SCHEMA_FALLBACK})`,
   };
 }
