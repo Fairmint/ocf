@@ -10,6 +10,7 @@ import {
   compareOcfSemverCore,
   resolveOcfSchemaBundle,
 } from "./ocf-version.mjs";
+import { validateStockHoldProfileSemantics } from "./validate-profile-stock-hold.mjs";
 
 const REGISTRY_PATH = "./OCIP/registry/profiles.json";
 
@@ -78,9 +79,22 @@ function normalizePackagePath(packageRoot, filepath) {
   return normalize(resolve(packageRoot, withoutDot));
 }
 
-function loadRegistry() {
-  const raw = fs.readFileSync(REGISTRY_PATH, "utf8");
+function loadRegistry(registryPath = REGISTRY_PATH) {
+  const raw = fs.readFileSync(registryPath, "utf8");
   return JSON.parse(raw);
+}
+
+function collectOcfTransactionItems(ocfParsedByPath = {}) {
+  const items = [];
+  for (const obj of Object.values(ocfParsedByPath)) {
+    if (
+      obj?.file_type === "OCF_TRANSACTIONS_FILE" &&
+      Array.isArray(obj.items)
+    ) {
+      items.push(...obj.items);
+    }
+  }
+  return items;
 }
 
 function findRegistryEntry(registry, id, version) {
@@ -238,7 +252,7 @@ async function listUndeclaredProfileFiles(packageRoot, declaredPaths) {
 /**
  * @param {object} manifest
  * @param {string} packageRoot
- * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string> }} options
+ * @param {{ mode?: ValidationMode, verbose?: boolean, ajv?: import('ajv').default, ocfObjectIndex?: Set<string>, ocfParsedByPath?: Record<string, object>, registryPath?: string, registryRoot?: string }} options
  */
 export async function validatePackageExtensions(
   manifest,
@@ -250,7 +264,11 @@ export async function validatePackageExtensions(
     verbose = false,
     ajv: sharedAjv,
     ocfObjectIndex = new Set(),
+    ocfParsedByPath = {},
+    registryPath = REGISTRY_PATH,
+    registryRoot = process.cwd(),
   } = options;
+  const ocfTransactions = collectOcfTransactionItems(ocfParsedByPath);
 
   /** @type {ExtensionIssue[]} */
   const issues = [];
@@ -262,7 +280,7 @@ export async function validatePackageExtensions(
     }
   }
 
-  const registry = loadRegistry();
+  const registry = loadRegistry(registryPath);
 
   const profiles = manifest.profiles ?? [];
   const vendorExtensions = manifest.vendor_extensions ?? [];
@@ -567,9 +585,10 @@ export async function validatePackageExtensions(
       continue;
     }
 
-    const schemaPath = entry.schema.startsWith("/")
+    const schemaRel = entry.schema.startsWith("/")
       ? entry.schema.slice(1)
       : entry.schema;
+    const schemaPath = resolve(registryRoot, schemaRel);
     const profileSchema = JSON.parse(fs.readFileSync(schemaPath, "utf8"));
 
     let validate;
@@ -600,11 +619,25 @@ export async function validatePackageExtensions(
 
       const economicHits = findEconomicFieldViolations(payload);
       for (const hit of economicHits) {
+        if (
+          decl.id === "ocf.stock-hold" &&
+          (/^stock_holds(\[\d+\])?\.quantity$/.test(hit) ||
+            /^stock_holds(\[\d+\])?\.security_id$/.test(hit) ||
+            /^stock_hold_cancellations(\[\d+\])?\.(security_id|hold_id)$/.test(
+              hit
+            ))
+        ) {
+          continue;
+        }
         push(
           "warning",
           C.PROFILE_ECONOMIC_VIOLATION,
           `Profile ${decl.id} file ${file.filepath} may contain cap-table field at ${hit} (advisory; see §5)`
         );
+      }
+
+      if (decl.id === "ocf.stock-hold") {
+        validateStockHoldProfileSemantics(payload, ocfTransactions, push);
       }
 
       const refs = walkObjectReferences(payload);
