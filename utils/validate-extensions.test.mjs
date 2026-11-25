@@ -15,6 +15,8 @@ import {
 import { DRAFT_07_META } from "./extension-error-codes.mjs";
 
 const PROFILE_SCHEMA_PATH = "profiles/ocf.transfer-reason/1.0.0/schema.json";
+const TRANSFER_RESTRICTION_SCHEMA_PATH =
+  "profiles/ocf.transfer-restriction/1.0.0/schema.json";
 
 describe("profile schema draft-07 and AJV integration", () => {
   test("transfer-reason profile schema is draft-07 and compiles on the OCF validator", async () => {
@@ -32,6 +34,23 @@ describe("profile schema draft-07 and AJV integration", () => {
       )
     );
     expect(validate(sample)).toBe(true);
+  });
+
+  test("transfer-restriction profile schema is draft-07 and compiles on the OCF validator", async () => {
+    const profileSchema = JSON.parse(
+      fs.readFileSync(TRANSFER_RESTRICTION_SCHEMA_PATH, "utf8")
+    );
+    expect(profileSchema.$schema).toBe(DRAFT_07_META);
+    const ajv = await getOcfValidator(false, false, false, false);
+    const validate = compileProfileSchema(ajv, profileSchema);
+    expect(
+      validate({
+        transfer_restrictions: [],
+        transfer_restriction_end_date_sets: [],
+        transfer_permitted: [],
+        transfer_restriction_cancellations: [],
+      })
+    ).toBe(true);
   });
 
   test("draft 2020-12 profile meta-schema is rejected", () => {

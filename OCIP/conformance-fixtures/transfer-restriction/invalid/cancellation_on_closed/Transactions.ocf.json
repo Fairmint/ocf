@@ -1,0 +1,99 @@
+{
+  "file_type": "OCF_TRANSACTIONS_FILE",
+  "items": [
+    {
+      "object_type": "TX_CONVERTIBLE_ISSUANCE",
+      "id": "tx-safe-001",
+      "security_id": "sec-safe-001",
+      "date": "2026-01-15",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "SAFE-1",
+      "convertible_type": "SAFE",
+      "investment_amount": {
+        "amount": "25000",
+        "currency": "USD"
+      },
+      "conversion_triggers": [
+        {
+          "trigger_id": "SAFE-1.TRIG",
+          "nickname": "Equity financing",
+          "trigger_description": "Converts on qualified equity financing",
+          "type": "AUTOMATIC_ON_CONDITION",
+          "trigger_condition": "Converts upon qualified equity financing",
+          "conversion_right": {
+            "type": "CONVERTIBLE_CONVERSION_RIGHT",
+            "conversion_mechanism": {
+              "type": "SAFE_CONVERSION",
+              "conversion_timing": "PRE_MONEY",
+              "conversion_mfn": false
+            },
+            "converts_to_future_round": true
+          }
+        }
+      ],
+      "seniority": 1
+    },
+    {
+      "object_type": "TX_CONVERTIBLE_ISSUANCE",
+      "id": "tx-safe-002",
+      "security_id": "sec-safe-002",
+      "date": "2026-02-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "SAFE-2",
+      "convertible_type": "SAFE",
+      "investment_amount": {
+        "amount": "15000",
+        "currency": "USD"
+      },
+      "conversion_triggers": [
+        {
+          "trigger_id": "SAFE-2.TRIG",
+          "nickname": "Equity financing",
+          "trigger_description": "Converts on qualified equity financing",
+          "type": "AUTOMATIC_ON_CONDITION",
+          "trigger_condition": "Converts upon qualified equity financing",
+          "conversion_right": {
+            "type": "CONVERTIBLE_CONVERSION_RIGHT",
+            "conversion_mechanism": {
+              "type": "SAFE_CONVERSION",
+              "conversion_timing": "PRE_MONEY",
+              "conversion_mfn": false
+            },
+            "converts_to_future_round": true
+          }
+        }
+      ],
+      "seniority": 1
+    },
+    {
+      "object_type": "TX_STOCK_ISSUANCE",
+      "id": "tx-stock-lock",
+      "security_id": "sec-sh-lock",
+      "date": "2026-03-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "CS-LOCK",
+      "stock_class_id": "sc-fixture-common",
+      "share_price": {
+        "amount": "1.00",
+        "currency": "USD"
+      },
+      "quantity": "100000",
+      "cost_basis": {
+        "amount": "0",
+        "currency": "USD"
+      },
+      "stock_legend_ids": []
+    },
+    {
+      "object_type": "TX_STOCK_CANCELLATION",
+      "id": "tx-close-lock",
+      "security_id": "sec-sh-lock",
+      "date": "2026-04-01",
+      "quantity": "1",
+      "reason_text": "Retired"
+    }
+  ]
+}

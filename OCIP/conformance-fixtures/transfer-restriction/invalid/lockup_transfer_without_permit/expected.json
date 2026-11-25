@@ -1,0 +1,4 @@
+{
+  "error_codes": ["transfer_restriction_lockup_transfer_without_permit"],
+  "exactly_one_error": true
+}

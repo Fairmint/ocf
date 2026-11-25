@@ -1,0 +1,4 @@
+{
+  "error_codes": ["transfer_restriction_dcp_cancellation_forbidden"],
+  "exactly_one_error": true
+}

@@ -1,0 +1,14 @@
+{
+  "transfer_restrictions": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-early",
+      "security_id": "sec-safe-001",
+      "date": "2025-01-01",
+      "restriction_type": "DISTRIBUTION_COMPLIANCE_PERIOD"
+    }
+  ],
+  "transfer_restriction_end_date_sets": [],
+  "transfer_permitted": [],
+  "transfer_restriction_cancellations": []
+}

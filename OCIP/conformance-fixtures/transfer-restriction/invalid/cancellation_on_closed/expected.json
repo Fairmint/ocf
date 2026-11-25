@@ -1,0 +1,4 @@
+{
+  "error_codes": ["transfer_restriction_cancellation_on_closed_restriction"],
+  "exactly_one_error": true
+}

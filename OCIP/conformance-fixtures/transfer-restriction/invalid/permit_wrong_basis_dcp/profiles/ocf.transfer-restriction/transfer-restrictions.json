@@ -1,0 +1,24 @@
+{
+  "transfer_restrictions": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-dcp-1",
+      "security_id": "sec-safe-001",
+      "date": "2026-01-15",
+      "restriction_type": "DISTRIBUTION_COMPLIANCE_PERIOD"
+    }
+  ],
+  "transfer_restriction_end_date_sets": [],
+  "transfer_permitted": [
+    {
+      "object_type": "TX_TRANSFER_PERMITTED",
+      "id": "tp-1",
+      "date": "2026-04-01",
+      "restriction_id": "tr-dcp-1",
+      "security_id": "sec-safe-001",
+      "transfer_id": "tx-never-used",
+      "basis": "CONTRACTUAL_EXCEPTION"
+    }
+  ],
+  "transfer_restriction_cancellations": []
+}

@@ -1,0 +1,102 @@
+{
+  "transfer_restrictions": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-dcp-safe-001",
+      "security_id": "sec-safe-001",
+      "date": "2026-01-15",
+      "restriction_type": "DISTRIBUTION_COMPLIANCE_PERIOD",
+      "reason_text": "Regulation S distribution compliance period",
+      "reference": "community-safe-round-2026"
+    },
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-dcp-safe-002",
+      "security_id": "sec-safe-002",
+      "date": "2026-02-01",
+      "restriction_type": "DISTRIBUTION_COMPLIANCE_PERIOD",
+      "reason_text": "Regulation S distribution compliance period",
+      "reference": "community-safe-round-2026"
+    },
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-lock-sh",
+      "security_id": "sec-sh-lock",
+      "date": "2026-03-01",
+      "end_date": "2027-03-01",
+      "restriction_type": "LOCKUP",
+      "reason_text": "Investor lockup agreement",
+      "reference": "lockup-2026"
+    },
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-lock-sh-2",
+      "security_id": "sec-sh-lock-2",
+      "date": "2026-03-05",
+      "end_date": "2027-03-01",
+      "restriction_type": "LOCKUP",
+      "reason_text": "Investor lockup with contractual transfer exception",
+      "reference": "lockup-2026"
+    },
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-dcp-sh-from-safe-002",
+      "security_id": "sec-sh-from-safe-002",
+      "date": "2026-08-01",
+      "end_date": "2027-06-15",
+      "restriction_type": "DISTRIBUTION_COMPLIANCE_PERIOD",
+      "reason_text": "Remaining Reg S period on converted shares",
+      "reference": "community-safe-round-2026"
+    }
+  ],
+  "transfer_restriction_end_date_sets": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION_END_DATE_SET",
+      "id": "eds-round-close",
+      "date": "2026-06-15",
+      "restriction_id": "tr-dcp-safe-001",
+      "security_id": "sec-safe-001",
+      "end_date": "2027-06-15"
+    },
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION_END_DATE_SET",
+      "id": "eds-round-close-002",
+      "date": "2026-06-15",
+      "restriction_id": "tr-dcp-safe-002",
+      "security_id": "sec-safe-002",
+      "end_date": "2027-06-15"
+    }
+  ],
+  "transfer_permitted": [
+    {
+      "object_type": "TX_TRANSFER_PERMITTED",
+      "id": "tp-safe-001-offshore",
+      "date": "2026-07-01",
+      "restriction_id": "tr-dcp-safe-001",
+      "security_id": "sec-safe-001",
+      "transfer_id": "tx-safe-001-transfer",
+      "basis": "REGULATION_S",
+      "reason_text": "Rule 904 offshore resale"
+    },
+    {
+      "object_type": "TX_TRANSFER_PERMITTED",
+      "id": "tp-lock-exception",
+      "date": "2026-08-15",
+      "restriction_id": "tr-lock-sh-2",
+      "security_id": "sec-sh-lock-2",
+      "transfer_id": "tx-lock-transfer-exception",
+      "basis": "CONTRACTUAL_EXCEPTION",
+      "reason_text": "Contractual secondary allowance"
+    }
+  ],
+  "transfer_restriction_cancellations": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION_CANCELLATION",
+      "id": "trc-lock-waiver",
+      "date": "2026-09-01",
+      "restriction_id": "tr-lock-sh",
+      "security_id": "sec-sh-lock",
+      "reason_text": "Issuer waiver of remaining lockup"
+    }
+  ]
+}

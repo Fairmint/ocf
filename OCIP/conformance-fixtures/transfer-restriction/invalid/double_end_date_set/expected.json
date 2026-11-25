@@ -1,0 +1,4 @@
+{
+  "error_codes": ["transfer_restriction_double_end_date_set"],
+  "exactly_one_error": true
+}

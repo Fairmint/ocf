@@ -1,0 +1,154 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://opencaptablecoalition.com/profiles/ocf.transfer-restriction/1.0.0/schema.json",
+  "title": "OCF Transfer Restriction Profile 1.0.0",
+  "type": "object",
+  "properties": {
+    "transfer_restrictions": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TransferRestrictionRecord" }
+    },
+    "transfer_restriction_end_date_sets": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TransferRestrictionEndDateSetRecord" }
+    },
+    "transfer_permitted": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TransferPermittedRecord" }
+    },
+    "transfer_restriction_cancellations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/TransferRestrictionCancellationRecord" }
+    }
+  },
+  "required": [
+    "transfer_restrictions",
+    "transfer_restriction_end_date_sets",
+    "transfer_permitted",
+    "transfer_restriction_cancellations"
+  ],
+  "additionalProperties": false,
+  "definitions": {
+    "RestrictionType": {
+      "type": "string",
+      "enum": ["DISTRIBUTION_COMPLIANCE_PERIOD", "LOCKUP", "OTHER"]
+    },
+    "DcpPermitBasis": {
+      "type": "string",
+      "enum": ["REGULATION_S", "REGISTRATION", "EXEMPTION"]
+    },
+    "LockupPermitBasis": {
+      "type": "string",
+      "enum": ["CONTRACTUAL_EXCEPTION"]
+    },
+    "TransferRestrictionRecord": {
+      "type": "object",
+      "properties": {
+        "object_type": { "const": "TX_TRANSFER_RESTRICTION" },
+        "id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "end_date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "restriction_type": { "$ref": "#/definitions/RestrictionType" },
+        "reason_text": { "type": "string" },
+        "reference": { "type": "string" },
+        "comments": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "security_id",
+        "date",
+        "restriction_type"
+      ],
+      "additionalProperties": false
+    },
+    "TransferRestrictionEndDateSetRecord": {
+      "type": "object",
+      "properties": {
+        "object_type": { "const": "TX_TRANSFER_RESTRICTION_END_DATE_SET" },
+        "id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "restriction_id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "end_date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "date",
+        "restriction_id",
+        "security_id",
+        "end_date"
+      ],
+      "additionalProperties": false
+    },
+    "TransferPermittedRecord": {
+      "type": "object",
+      "properties": {
+        "object_type": { "const": "TX_TRANSFER_PERMITTED" },
+        "id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "restriction_id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "transfer_id": { "type": "string" },
+        "basis": {
+          "type": "string",
+          "enum": [
+            "REGULATION_S",
+            "REGISTRATION",
+            "EXEMPTION",
+            "CONTRACTUAL_EXCEPTION"
+          ]
+        },
+        "reason_text": { "type": "string" },
+        "reference": { "type": "string" }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "date",
+        "restriction_id",
+        "security_id",
+        "transfer_id",
+        "basis"
+      ],
+      "additionalProperties": false
+    },
+    "TransferRestrictionCancellationRecord": {
+      "type": "object",
+      "properties": {
+        "object_type": { "const": "TX_TRANSFER_RESTRICTION_CANCELLATION" },
+        "id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "restriction_id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "reason_text": { "type": "string" }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "date",
+        "restriction_id",
+        "security_id",
+        "reason_text"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

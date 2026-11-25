@@ -1,0 +1,4 @@
+{
+  "error_codes": ["transfer_restriction_date_before_issuance"],
+  "exactly_one_error": true
+}

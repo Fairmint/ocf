@@ -1,0 +1,15 @@
+{
+  "transfer_restrictions": [
+    {
+      "object_type": "TX_TRANSFER_RESTRICTION",
+      "id": "tr-dcp-1",
+      "security_id": "sec-safe-001",
+      "date": "2026-01-15",
+      "restriction_type": "DISTRIBUTION_COMPLIANCE_PERIOD",
+      "reason_text": "DCP"
+    }
+  ],
+  "transfer_restriction_end_date_sets": [],
+  "transfer_permitted": [],
+  "transfer_restriction_cancellations": []
+}
