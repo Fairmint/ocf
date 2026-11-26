@@ -30,14 +30,16 @@ verify each item manually (human-checkable gates).
 Under `conformance-fixtures/<id>/`:
 
 -   [ ] **`base/`** — minimal valid OCF package without the profile.
--   [ ] **`with-profile/`** (or overlay documented in `expected.json`) — manifest declares the
-        profile and lists `profile_files`.
+-   [ ] **`with-profiles/`** (OCIP-0001 §6.1) or **`with-profile/`** in this POC — manifest declares
+        the profile and lists `profile_files` (or `expected.json` lists overlays explicitly).
 -   [ ] **`compatible/`** — scenarios that **pass** validation; each includes `expected.json`
         (`error_codes`: `[]`).
 -   [ ] **`invalid/`** — scenarios that **fail** with documented error codes in `expected.json`.
 -   [ ] **`expected/`** (optional) — snapshots such as cap-table equivalence when applicable.
 
-Fixture automation must pass in CI (`npm test` in this repository).
+Fixture automation must pass in CI (`npm test` in this repository). The local harness is required
+now; the coalition reference validator should load this registry once the optional
+`--include-draft-extensions` flag ships.
 
 ## Registry row
 

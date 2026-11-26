@@ -1,4 +1,7 @@
 {
   "overlays": ["with-profile", "invalid/stop_quantity_forbidden"],
-  "error_codes": ["stock_hold_stop_quantity_forbidden"]
+  "error_codes": [
+    "profile_schema_invalid",
+    "stock_hold_stop_quantity_forbidden"
+  ]
 }

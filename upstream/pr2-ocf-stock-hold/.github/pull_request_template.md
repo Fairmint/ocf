@@ -4,34 +4,34 @@
 
 ## Registry row
 
--   **Id:**
--   **Version:**
--   **Status:** draft | review | accepted | vendor
--   **Namespace:** ocf._ | com.&lt;vendor&gt;._
+- **Id:**
+- **Version:**
+- **Status:** draft | review | accepted | vendor
+- **Namespace:** `ocf.*` | `com.<vendor>.*`
 
 ## Quality gate (CHECKLIST.md)
 
 ### Identity and design
 
--   [ ] Correct namespace (`ocf.*` or `com.<vendor>.*`)
--   [ ] No duplicate `(id, version)`
--   [ ] Small, composable scope; dependencies in `requires_profiles` if any
--   [ ] Spec documents **no economic effect** on the cap table
+- [ ] Correct namespace (`ocf.*` or `com.<vendor>.*`)
+- [ ] No duplicate `(id, version)`
+- [ ] Small, composable scope; dependencies in `requires_profiles` if any
+- [ ] Spec documents **no economic effect** on the cap table
 
 ### Schema and data
 
--   [ ] draft-07 schema under `profiles/<id>/<version>/schema.json`
--   [ ] Sample payload validates; runs through reference validator with profile declared
+- [ ] draft-07 schema under `profiles/<id>/<version>/schema.json`
+- [ ] Sample payload validates; runs through reference validator with profile declared
 
 ### Conformance fixtures
 
--   [ ] `base/`, profile overlay, `compatible/*`, `invalid/*` with `expected.json`
--   [ ] Fixture tests pass (`extensions-registry-draft-conformance` or upstream equivalent)
+- [ ] `base/`, profile overlay, `compatible/*`, `invalid/*` with `expected.json`
+- [ ] Fixture tests pass (`npm test`)
 
 ### Registry
 
--   [ ] `registry.json` updated; paths match this PR
--   [ ] Producer/consumer behavior verified per CHECKLIST.md
+- [ ] `registry.json` updated; paths match this PR
+- [ ] `tests/extension-conformance.test.mjs` wires `validatePackage` for the extension
 
 ## Testing
 

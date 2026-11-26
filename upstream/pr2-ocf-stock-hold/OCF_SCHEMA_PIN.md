@@ -11,6 +11,14 @@ commit recorded in [`vendor/ocf-schema-pin.json`](./vendor/ocf-schema-pin.json).
 | Repository | `Open-Cap-Table-Coalition/Open-Cap-Format-OCF` |
 | Commit | `fd260852ebd3d3e1a3183f8c97ae3f645dc9f0d6` (`main` at pin time) |
 
+## Profile schema `$ref` URIs
+
+Profile JSON Schemas reference OCF types (for example `Date.schema.json`) using the coalition
+schema **`$id` URIs** (typically `.../Open-Cap-Format-OCF/main/...`). AJV resolves those against
+the **pinned tree** under `vendor/ocf-schema/`, not by fetching `main` over the network. The git
+pin fixes which schema **content** is loaded; it does not change the stable `$id` strings inside
+that tree.
+
 ## Overlay (OCIP-0001 manifest fields)
 
 The pinned tree does not yet include manifest `profiles`, `profile_files`, `vendor_extensions`, and

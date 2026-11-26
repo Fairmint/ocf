@@ -1,0 +1,9 @@
+Address OCF-Extensions-DRAFT#1 review: harden registry harness and invariants
+
+Require validatePackage when registry lists profiles; fail zero discovered
+conformance cases; discover warnings/ and require expected.json per case; exact
+invalid error-code sets. Add assertRegistryInvariants (unique keys, schema path
+layout, safe paths, status rules). Tighten registry.schema.json semver and id
+patterns. Document validator immutability/pin contract, TWG private OCIP note,
+LICENSE, CI permissions and pinned actions, npm test in PR template, and wire
+stock-hold through the generic conformance runner in PR2.

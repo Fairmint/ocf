@@ -1,6 +1,7 @@
 import {
   loadRegistryIndex,
   validateRegistryAgainstSchema,
+  assertRegistryInvariants,
   assertConformanceDirectoriesExist,
 } from "../lib/registry-index.mjs";
 import { runRegisteredExtensionConformance } from "../lib/run-extension-conformance.mjs";
@@ -15,6 +16,11 @@ describe("registry index", () => {
     expect(ok).toBe(true);
     expect(errors).toEqual([]);
   });
+
+  test("registry satisfies file and naming invariants", async () => {
+    const { registry, repoRoot } = await loadRegistryIndex();
+    expect(assertRegistryInvariants(registry, repoRoot)).toEqual([]);
+  });
 });
 
 describe("registered extension conformance", () => {
@@ -24,12 +30,10 @@ describe("registered extension conformance", () => {
     expect(missing).toEqual([]);
   });
 
-  test("conformance runner passes (zero or more extensions)", async () => {
+  test("zero profiles passes without validatePackage hook", async () => {
     const result = await runRegisteredExtensionConformance();
     expect(result.ok).toBe(true);
-    const { registry } = await loadRegistryIndex();
-    if (registry.profiles.length === 0) {
-      expect(result.ranCases).toBe(0);
-    }
+    expect(result.ranCases).toBe(0);
+    expect(result.violations).toEqual([]);
   });
 });

@@ -5,12 +5,15 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11bd71901beb3feda9ea9399dbd9676f2d3190ab # v4.2.2
+      - uses: actions/setup-node@39370e3970dfc4068eb4daaee1eb396bd65ac899 # v4.1.0
         with:
           node-version: "20"
           cache: npm
