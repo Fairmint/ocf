@@ -1,0 +1,34 @@
+{
+  "file_type": "OCF_TRANSACTIONS_FILE",
+  "items": [
+    {
+      "object_type": "TX_STOCK_ISSUANCE",
+      "id": "tx-issue-sh-001",
+      "security_id": "sec-sh-001",
+      "date": "2024-01-01",
+      "security_law_exemptions": [],
+      "stakeholder_id": "sh-fixture-001",
+      "custom_id": "CS-1",
+      "stock_class_id": "sc-fixture-common",
+      "share_price": { "amount": "1.00", "currency": "USD" },
+      "quantity": "200",
+      "cost_basis": { "amount": "0", "currency": "USD" },
+      "stock_legend_ids": []
+    },
+    {
+      "object_type": "TX_STOCK_CLASS_SPLIT",
+      "id": "tx-split-2-for-1",
+      "date": "2024-05-15",
+      "stock_class_id": "sc-fixture-common",
+      "split_ratio": { "numerator": "2", "denominator": "1" }
+    },
+    {
+      "object_type": "TX_STOCK_TRANSFER",
+      "id": "tx-transfer-after-stop",
+      "security_id": "sec-sh-001",
+      "date": "2024-07-01",
+      "quantity": "10",
+      "resulting_security_ids": ["sec-sh-001-balance"]
+    }
+  ]
+}
