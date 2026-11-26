@@ -1,0 +1,31 @@
+{
+  "stock_holds": [
+    {
+      "object_type": "TX_STOCK_HOLD",
+      "id": "hold-a",
+      "security_id": "sec-sh-001",
+      "date": "2024-02-01",
+      "hold_type": "STOP_TRANSFER",
+      "reference": "ORD-1",
+      "reason_text": "Stop"
+    }
+  ],
+  "stock_hold_cancellations": [
+    {
+      "object_type": "TX_STOCK_HOLD_CANCELLATION",
+      "id": "cancel-1",
+      "date": "2024-03-01",
+      "hold_id": "hold-a",
+      "security_id": "sec-sh-001",
+      "reason_text": "First cancel"
+    },
+    {
+      "object_type": "TX_STOCK_HOLD_CANCELLATION",
+      "id": "cancel-2",
+      "date": "2024-03-02",
+      "hold_id": "hold-a",
+      "security_id": "sec-sh-001",
+      "reason_text": "Second cancel"
+    }
+  ]
+}

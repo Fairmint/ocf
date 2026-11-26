@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://opencaptablecoalition.com/profiles/ocf.stock-hold/1.0.0/schema.json",
+  "title": "OCF Stock Hold Profile 1.0.0",
+  "type": "object",
+  "properties": {
+    "stock_holds": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/StockHoldRecord" }
+    },
+    "stock_hold_cancellations": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/StockHoldCancellationRecord" }
+    }
+  },
+  "required": ["stock_holds", "stock_hold_cancellations"],
+  "additionalProperties": false,
+  "definitions": {
+    "HoldType": {
+      "type": "string",
+      "enum": ["REGISTER_SETTLEMENT", "STOP_TRANSFER"]
+    },
+    "Hold": {
+      "type": "object",
+      "description": "Primitive: stock security hold (settlement or stop-transfer).",
+      "properties": {
+        "object_type": { "const": "TX_STOCK_HOLD" },
+        "id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "hold_type": { "$ref": "#/definitions/HoldType" },
+        "reference": {
+          "type": "string",
+          "description": "Settlement identifier, or case/order number for a stop."
+        },
+        "reason_text": { "type": "string" }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "security_id",
+        "date",
+        "hold_type",
+        "reference",
+        "reason_text"
+      ]
+    },
+    "HoldCancellation": {
+      "type": "object",
+      "description": "Primitive: cancellation of an entire stock hold.",
+      "properties": {
+        "object_type": { "const": "TX_STOCK_HOLD_CANCELLATION" },
+        "id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "hold_id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "reason_text": { "type": "string" }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "date",
+        "hold_id",
+        "security_id",
+        "reason_text"
+      ],
+      "additionalProperties": false
+    },
+    "StockHoldRecord": {
+      "type": "object",
+      "description": "Stock hold; REGISTER_SETTLEMENT requires quantity, STOP_TRANSFER forbids it.",
+      "properties": {
+        "object_type": { "const": "TX_STOCK_HOLD" },
+        "id": { "type": "string" },
+        "security_id": { "type": "string" },
+        "date": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Date.schema.json"
+        },
+        "hold_type": { "$ref": "#/definitions/HoldType" },
+        "reference": { "type": "string" },
+        "reason_text": { "type": "string" },
+        "quantity": {
+          "$ref": "https://raw.githubusercontent.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF/main/schema/types/Numeric.schema.json"
+        }
+      },
+      "required": [
+        "object_type",
+        "id",
+        "security_id",
+        "date",
+        "hold_type",
+        "reference",
+        "reason_text"
+      ],
+      "additionalProperties": false,
+      "if": {
+        "properties": { "hold_type": { "const": "REGISTER_SETTLEMENT" } },
+        "required": ["hold_type"]
+      },
+      "then": { "required": ["quantity"] },
+      "else": {
+        "not": { "required": ["quantity"] }
+      }
+    },
+    "StockHoldCancellationRecord": {
+      "$ref": "#/definitions/HoldCancellation"
+    }
+  }
+}

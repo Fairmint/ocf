@@ -1,0 +1,4 @@
+{
+  "overlays": ["with-profile", "invalid/terminal_during_stop"],
+  "error_codes": ["stock_hold_terminal_during_stop"]
+}

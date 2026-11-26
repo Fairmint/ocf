@@ -1,0 +1,119 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema",
+  "$id": "https://opencaptablecoalition.com/extensions-registry/registry.schema.json",
+  "title": "OCF extension registry index",
+  "description": "Machine-readable index of coalition profiles (ocf.*) and vendor extensions (com.*). See OCIP-0001.",
+  "type": "object",
+  "required": ["version", "profiles"],
+  "additionalProperties": false,
+  "properties": {
+    "version": {
+      "type": "string",
+      "description": "Registry format version (semver), not an OCF or profile version.",
+      "pattern": "^\\d+\\.\\d+\\.\\d+"
+    },
+    "profiles": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/profileRow" }
+    }
+  },
+  "definitions": {
+    "profileRow": {
+      "type": "object",
+      "required": [
+        "id",
+        "version",
+        "status",
+        "schema",
+        "requires_ocf",
+        "min_ocf_version",
+        "requires_profiles",
+        "owner"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^(ocf\\.[a-z0-9][a-z0-9.-]*|com\\.[a-z0-9][a-z0-9.-]*\\.[a-z0-9][a-z0-9.-]*)$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "review",
+            "accepted",
+            "deprecated",
+            "superseded",
+            "rejected",
+            "vendor"
+          ]
+        },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "schema": {
+          "type": "string",
+          "description": "Repository-relative path to this row's JSON Schema file."
+        },
+        "spec": {
+          "type": "string",
+          "description": "Repository-relative path to the human-readable specification."
+        },
+        "requires_ocf": {
+          "type": "string",
+          "description": "Semver range on OCF schema releases (ocf_version)."
+        },
+        "min_ocf_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+"
+        },
+        "requires_profiles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "version"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string" },
+              "version": { "type": "string" }
+            }
+          }
+        },
+        "owner": {
+          "type": "string",
+          "description": "coalition or vendor organization name."
+        },
+        "created": {
+          "type": "string",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "superseded_by": {
+          "oneOf": [
+            { "type": "null" },
+            {
+              "type": "object",
+              "required": ["id", "version"],
+              "additionalProperties": false,
+              "properties": {
+                "id": { "type": "string" },
+                "version": { "type": "string" }
+              }
+            },
+            {
+              "type": "object",
+              "required": ["ocf", "version"],
+              "additionalProperties": false,
+              "properties": {
+                "ocf": { "const": true },
+                "version": { "type": "string" }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

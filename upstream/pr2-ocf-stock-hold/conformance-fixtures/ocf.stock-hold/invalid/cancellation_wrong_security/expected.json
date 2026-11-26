@@ -1,0 +1,4 @@
+{
+  "overlays": ["with-profile", "invalid/cancellation_wrong_security"],
+  "error_codes": ["stock_hold_cancellation_wrong_security"]
+}

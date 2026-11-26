@@ -1,0 +1,4 @@
+{
+  "overlays": ["with-profile", "invalid/double_cancellation"],
+  "error_codes": ["stock_hold_double_cancellation"]
+}

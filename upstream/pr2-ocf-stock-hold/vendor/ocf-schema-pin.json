@@ -1,0 +1,7 @@
+{
+  "repository": "https://github.com/Open-Cap-Table-Coalition/Open-Cap-Format-OCF.git",
+  "ref": "fd260852ebd3d3e1a3183f8c97ae3f645dc9f0d6",
+  "refLabel": "main",
+  "overlayPath": "vendor/ocip-pending",
+  "notes": "Coalition main schema tree, plus vendored OCIP-0001 manifest extension fields under vendor/ocip-pending/ until they ship in a tagged OCF release. Conformance fixtures use ocf_version 1.3.0-alpha+main."
+}
